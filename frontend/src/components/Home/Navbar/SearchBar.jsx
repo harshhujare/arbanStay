@@ -1,139 +1,155 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { SearchIcon, X, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-const cities = [
-  "Kolhapur",
-  "Pune",
-  "Mumbai",
-  "Delhi",
-  "Bangalore",
-  "Goa",
-  "Jaipur",
-  "Hyderabad",
-];
+import Fuse from "fuse.js";
+import { useSearchContext } from "../../../context/SearchContext";
 
 const SearchBar = ({ isAtTop = true }) => {
   const navigate = useNavigate();
+  const { cities } = useSearchContext();
+
   const [isExpanded, setIsExpanded] = useState(false);
   const [cityQuery, setCityQuery] = useState("");
-  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
-  const searchBarRef = useRef(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const filteredCities = cities.filter((city) =>
-    city.toLowerCase().includes(cityQuery.toLowerCase()),
+  const wrapperRef = useRef(null);
+
+  const fuse = useMemo(
+    () => new Fuse(cities, { threshold: 0.4, includeScore: true }),
+    [cities]
   );
 
-  // Handle search submission
+  const filteredCities = useMemo(() => {
+    if (!cityQuery.trim()) return cities.slice(0, 6);
+    return fuse.search(cityQuery).map((r) => r.item).slice(0, 6);
+  }, [cityQuery, fuse, cities]);
+
   const handleSearch = () => {
     if (cityQuery.trim()) {
       navigate(`/?city=${encodeURIComponent(cityQuery.trim())}`);
     }
-    setShowCitySuggestions(false);
+    setShowSuggestions(false);
     setIsExpanded(false);
   };
 
   const handleCitySelect = (city) => {
     setCityQuery(city);
-    setShowCitySuggestions(false);
-    // Immediately search when city is selected
-    navigate(`/?city=${encodeURIComponent(city)}`);
+    setShowSuggestions(false);
     setIsExpanded(false);
+    navigate(`/?city=${encodeURIComponent(city)}`);
   };
 
-  // Close suggestions when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        searchBarRef.current &&
-        !searchBarRef.current.contains(event.target)
-      ) {
-        setShowCitySuggestions(false);
+    const handleClickOutside = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setShowSuggestions(false);
       }
     };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-    if (showCitySuggestions) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showCitySuggestions]);
+  const SuggestionList = () =>
+    showSuggestions && filteredCities.length > 0 ? (
+      <div
+        className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-2xl z-[100] overflow-hidden"
+        style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)" }}
+      >
+        <div className="max-h-72 overflow-y-auto p-2">
+          {filteredCities.map((city) => (
+            <button
+              key={city}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-lg transition text-left"
+              style={{ color: "var(--text-primary)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleCitySelect(city);
+              }}
+            >
+              <div className="p-2 rounded-lg flex-shrink-0" style={{ background: "var(--bg-secondary)" }}>
+                <MapPin size={15} style={{ color: "var(--text-secondary)" }} />
+              </div>
+              <span className="font-medium text-sm">{city}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    ) : null;
 
   return (
     <div className="flex items-center relative w-full md:w-auto">
-      {/* Mobile View: Search Pill (Collapsed) */}
+
+      {/* ─── Mobile: collapsed pill ─── */}
       <button
-        className={`md:hidden flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2 shadow-sm transition-all duration-300 w-full ${
+        className={`md:hidden flex items-center gap-2 rounded-full px-4 py-2 shadow-sm transition-all duration-300 w-full ${
           isExpanded ? "opacity-0 pointer-events-none absolute" : "opacity-100"
         }`}
+        style={{ background: "var(--bg-secondary)", color: "var(--text-secondary)" }}
         onClick={() => setIsExpanded(true)}
         aria-label="Search"
       >
         <SearchIcon size={16} className="text-[#FF385c]" />
-        <div className="flex-1 text-left">
-          <span className="text-sm font-medium text-gray-600">
-            {cityQuery || "Search destinations"}
-          </span>
-        </div>
+        <span className="text-sm font-medium flex-1 text-left">
+          {cityQuery || "Search destinations"}
+        </span>
       </button>
 
-      {/* Mobile View: Expanded Search Overlay */}
+      {/* ─── Mobile: full-screen overlay ─── */}
       <div
-        className={`md:hidden fixed inset-0 bg-white z-[60] flex flex-col gap-4 p-4 transition-all duration-300 overflow-y-auto ${
+        className={`md:hidden fixed inset-0 z-[60] flex flex-col gap-4 p-4 transition-all duration-300 overflow-y-auto ${
           isExpanded
             ? "opacity-100 visible translate-y-0"
             : "opacity-0 invisible translate-y-4 pointer-events-none"
         }`}
+        style={{ background: "var(--bg-card)" }}
       >
-        {/* Close Button */}
         <div className="flex justify-between items-center mb-2">
-          <h2 className="text-lg font-semibold text-gray-800">
-            Search Destinations
-          </h2>
+          <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>Search Destinations</h2>
           <button
             onClick={() => setIsExpanded(false)}
-            className="p-2 rounded-full hover:bg-gray-100 transition"
+            className="p-2 rounded-full transition"
+            style={{ color: "var(--text-secondary)" }}
           >
-            <X size={20} className="text-gray-700" />
+            <X size={20} />
           </button>
         </div>
 
-        {/* City Search */}
         <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold text-gray-500 uppercase">
-            Destination
-          </label>
-          <div className="flex items-center gap-3 bg-gray-100 rounded-lg px-4 py-3">
-            <MapPin size={18} className="text-gray-500" />
+          <label className="text-xs font-semibold uppercase" style={{ color: "var(--text-muted)" }}>Destination</label>
+          <div className="flex items-center gap-3 rounded-lg px-4 py-3" style={{ background: "var(--bg-secondary)" }}>
+            <MapPin size={18} style={{ color: "var(--text-secondary)" }} />
             <input
               type="text"
-              className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-500"
+              className="flex-1 bg-transparent outline-none placeholder-gray-500"
+              style={{ color: "var(--text-primary)" }}
               placeholder="Search city..."
               value={cityQuery}
               onChange={(e) => setCityQuery(e.target.value)}
             />
           </div>
 
-          {/* City Suggestions */}
-          {cityQuery && filteredCities.length > 0 && (
+          {/* Mobile suggestions */}
+          {filteredCities.length > 0 && (
             <div className="flex flex-col gap-1 mt-1">
-              {filteredCities.slice(0, 5).map((city) => (
+              {filteredCities.map((city) => (
                 <button
                   key={city}
-                  className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition text-left"
+                  className="flex items-center gap-3 p-3 rounded-lg transition text-left"
+                  style={{ color: "var(--text-primary)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   onClick={() => handleCitySelect(city)}
                 >
-                  <MapPin size={16} className="text-gray-400" />
-                  <span className="text-gray-700 font-medium">{city}</span>
+                  <MapPin size={16} style={{ color: "var(--text-muted)" }} />
+                  <span className="font-medium">{city}</span>
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        {/* Search Button */}
         <button
           onClick={handleSearch}
           className="w-full mt-4 px-6 py-3 bg-[#FF385c] text-white rounded-lg hover:bg-[#e02e4d] transition font-medium"
@@ -142,99 +158,76 @@ const SearchBar = ({ isAtTop = true }) => {
         </button>
       </div>
 
-      {/* Desktop/Tablet View: Dynamic Search Bar */}
+      {/* ─── Desktop / Tablet: dynamic search bar ─── */}
       <div
-        ref={searchBarRef}
-        className="hidden md:flex items-center rounded-full shadow-sm border border-gray-300 hover:shadow-md transition-all duration-500 ease-in-out bg-white overflow-hidden relative"
-        style={{
-          width: isAtTop ? "min(850px, 90vw)" : "min(374px, 60vw)",
-          height: isAtTop ? "66px" : "46px",
-          padding: isAtTop ? "0 8px" : "0 8px",
-        }}
+        ref={wrapperRef}
+        className="hidden md:block relative transition-all duration-500 ease-in-out"
+        style={{ width: isAtTop ? "min(850px, 90vw)" : "min(374px, 60vw)" }}
       >
-        {/* Expanded View - Shows full search when at top */}
-        {isAtTop ? (
-          <>
-            {/* City Search */}
-            <div className="flex-1 flex items-center gap-3 px-6 py-2">
+        {/* The pill */}
+        <div
+          className="flex items-center w-full rounded-full shadow-sm hover:shadow-md overflow-hidden transition-all duration-500"
+          style={{
+            height: isAtTop ? "66px" : "46px",
+            padding: "0 8px",
+            background: "var(--bg-card)",
+            border: "1px solid var(--border-color)",
+          }}
+        >
+          {isAtTop ? (
+            <>
+              <div className="flex-1 flex items-center px-6 py-2">
+                <input
+                  type="text"
+                  className="flex-1 outline-none bg-transparent text-base min-w-0 placeholder-gray-400"
+                  style={{ color: "var(--text-primary)" }}
+                  placeholder="Search destinations..."
+                  value={cityQuery}
+                  onChange={(e) => {
+                    setCityQuery(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+              </div>
+              <button
+                onClick={handleSearch}
+                className="h-12 w-12 text-white bg-[#FF385c] rounded-full flex items-center justify-center hover:bg-[#e02e4d] transition flex-shrink-0 ml-2"
+                aria-label="Search"
+              >
+                <SearchIcon size={18} />
+              </button>
+            </>
+          ) : (
+            <>
+              <SearchIcon size={16} className="flex-shrink-0 ml-2" style={{ color: "var(--text-secondary)" }} />
               <input
                 type="text"
-                className="flex-1 outline-none bg-transparent text-base text-gray-700 placeholder-gray-400 min-w-0"
+                className="flex-1 outline-none text-sm px-3 min-w-0 placeholder-gray-400 bg-transparent"
+                style={{ color: "var(--text-primary)" }}
                 placeholder="Search destinations..."
                 value={cityQuery}
                 onChange={(e) => {
                   setCityQuery(e.target.value);
-                  setShowCitySuggestions(true);
+                  setShowSuggestions(true);
                 }}
-                onFocus={() => setShowCitySuggestions(true)}
-                onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                onFocus={() => setShowSuggestions(true)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
-            </div>
+              <button
+                onClick={handleSearch}
+                className="h-8 w-8 text-white bg-[#FF385c] rounded-full flex items-center justify-center hover:bg-[#e02e4d] transition flex-shrink-0"
+                aria-label="Search"
+              >
+                <SearchIcon size={14} />
+              </button>
+            </>
+          )}
+        </div>
 
-            <button
-              onClick={handleSearch}
-              className="h-12 w-12 text-white bg-[#FF385c] rounded-full flex items-center justify-center hover:bg-[#e02e4d] transition flex-shrink-0 ml-2"
-              aria-label="Search"
-            >
-              <SearchIcon size={18} />
-            </button>
-          </>
-        ) : (
-          /* Compact View - Shows minimal search when scrolled */
-          <>
-            <SearchIcon
-              size={16}
-              className="text-gray-500 flex-shrink-0 ml-2"
-            />
-
-            <input
-              type="text"
-              className="flex-1 outline-none text-sm text-gray-700 placeholder-gray-400 px-3 min-w-0"
-              placeholder="Search destinations..."
-              value={cityQuery}
-              onChange={(e) => {
-                setCityQuery(e.target.value);
-              }}
-              onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-            />
-
-            <button
-              onClick={handleSearch}
-              className="h-8 w-8 text-white bg-[#FF385c] rounded-full flex items-center justify-center hover:bg-[#e02e4d] transition flex-shrink-0"
-              aria-label="Search"
-            >
-              <SearchIcon size={14} />
-            </button>
-          </>
-        )}
-
-        {/* Desktop City Suggestions Dropdown */}
-        {isAtTop && showCitySuggestions && cityQuery && (
-          <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden max-w-md z-50 w-full">
-            <div className="max-h-80 overflow-y-auto p-2">
-              {filteredCities.length > 0 ? (
-                filteredCities.map((city) => (
-                  <button
-                    key={city}
-                    className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition text-left"
-                    onClick={() => handleCitySelect(city)}
-                  >
-                    <div className="bg-gray-100 p-2 rounded-lg">
-                      <MapPin size={16} className="text-gray-600" />
-                    </div>
-                    <span className="text-gray-700 font-medium text-sm">
-                      {city}
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <div className="p-4 text-center text-gray-500 text-sm">
-                  No destinations found
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Dropdown rendered OUTSIDE the overflow-hidden pill */}
+        <SuggestionList />
       </div>
     </div>
   );

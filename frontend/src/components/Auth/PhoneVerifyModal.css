@@ -1,0 +1,292 @@
+/* ==================== OVERLAY ==================== */
+
+.phone-verify-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  padding: 16px;
+  animation: phoneVerifyFadeIn 0.2s ease;
+}
+
+@keyframes phoneVerifyFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ==================== MODAL ==================== */
+
+.phone-verify-modal {
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  border-radius: 16px;
+  padding: 32px 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: phoneVerifySlideUp 0.3s ease;
+  position: relative;
+}
+
+@keyframes phoneVerifySlideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ==================== HEADER ==================== */
+
+.phone-verify-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.phone-verify-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #FF5A5F, #E0484D);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phone-verify-icon {
+  color: white;
+  width: 24px;
+  height: 24px;
+}
+
+.phone-verify-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #f5f5f5;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  color: #666;
+}
+
+.phone-verify-close:hover {
+  background: #e0e0e0;
+}
+
+/* ==================== TYPOGRAPHY ==================== */
+
+.phone-verify-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.phone-verify-subtitle {
+  font-size: 14px;
+  color: #717171;
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+}
+
+/* ==================== ERROR ==================== */
+
+.phone-verify-error {
+  padding: 12px 16px;
+  background: #fff4f4;
+  border: 1px solid #ffcdd2;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+
+.phone-verify-error p {
+  color: #c41952;
+  font-size: 14px;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ==================== FORM ==================== */
+
+.phone-verify-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.phone-verify-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: -8px;
+}
+
+.phone-verify-input-wrap {
+  display: flex;
+  align-items: center;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  transition: border-color 0.2s;
+  overflow: hidden;
+}
+
+.phone-verify-input-wrap:focus-within {
+  border-color: #FF5A5F;
+}
+
+.phone-verify-prefix {
+  padding: 0 14px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  border-right: 1px solid #e0e0e0;
+  background: #fafafa;
+}
+
+.phone-verify-input {
+  flex: 1;
+  padding: 14px 16px;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  color: #1a1a1a;
+}
+
+.phone-verify-input::placeholder {
+  color: #b0b0b0;
+}
+
+.phone-verify-otp-input {
+  text-align: center;
+  font-size: 28px;
+  letter-spacing: 16px;
+  font-weight: 700;
+  padding: 16px 20px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  transition: border-color 0.2s;
+}
+
+.phone-verify-otp-input:focus {
+  outline: none;
+  border-color: #FF5A5F;
+}
+
+.phone-verify-hint {
+  font-size: 12px;
+  color: #999;
+  margin: -8px 0 0 0;
+}
+
+/* ==================== BUTTONS ==================== */
+
+.phone-verify-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  background: linear-gradient(to right, #e61e4d, #d70466);
+  transition: all 0.2s;
+}
+
+.phone-verify-btn:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 4px 16px rgba(230, 30, 77, 0.3);
+}
+
+.phone-verify-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.phone-verify-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: phoneVerifySpin 0.6s linear infinite;
+}
+
+@keyframes phoneVerifySpin {
+  to { transform: rotate(360deg); }
+}
+
+.phone-verify-resend {
+  background: none;
+  border: none;
+  color: #FF5A5F;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px;
+  text-align: center;
+  transition: color 0.2s;
+}
+
+.phone-verify-resend:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.phone-verify-resend:disabled {
+  color: #b0b0b0;
+  cursor: not-allowed;
+}
+
+.phone-verify-change {
+  background: none;
+  border: none;
+  color: #FF5A5F;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ==================== OTP HEADER ==================== */
+
+.phone-verify-otp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.phone-verify-sent-to {
+  font-size: 14px;
+  color: #555;
+  margin: 0;
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 480px) {
+  .phone-verify-modal {
+    padding: 24px 20px;
+    border-radius: 12px;
+  }
+
+  .phone-verify-title {
+    font-size: 18px;
+  }
+
+  .phone-verify-otp-input {
+    font-size: 24px;
+    letter-spacing: 12px;
+  }
+}

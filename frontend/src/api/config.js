@@ -9,10 +9,14 @@ export const apiClient = {
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
 
+    // Check if body is FormData (for file uploads)
+    const isFormData = options.body instanceof FormData;
+
     const config = {
       ...options,
       headers: {
-        "Content-Type": "application/json",
+        // Don't set Content-Type for FormData - browser will set it with boundary
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
         ...options.headers,
       },
       credentials: "include", // Send cookies with requests
@@ -39,7 +43,8 @@ export const apiClient = {
   post(endpoint, body) {
     return this.request(endpoint, {
       method: "POST",
-      body: JSON.stringify(body),
+      // Don't stringify FormData
+      body: body instanceof FormData ? body : JSON.stringify(body),
     });
   },
 

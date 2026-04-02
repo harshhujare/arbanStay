@@ -88,6 +88,37 @@ const propertySchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // Admin moderation status
+    adminStatus: {
+      type: String,
+      enum: ["active", "suspended", "pending_review"],
+      default: "active",
+    },
+    // Analytics fields
+    views: {
+      type: Number,
+      default: 0,
+    },
+    likes: {
+      type: Number,
+      default: 0,
+    },
+    likedBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    contactRequests: {
+      type: Number,
+      default: 0,
+    },
+    viewHistory: [
+      {
+        date: { type: Date },
+        count: { type: Number, default: 0 },
+      },
+    ],
   },
   {
     timestamps: true,
@@ -101,6 +132,7 @@ propertySchema.index({ title: "text", description: "text" });
 
 // Compound index for common search patterns
 propertySchema.index({ "location.city": 1, price: 1, maxGuests: 1 });
+propertySchema.index({ "location.city": 1, bedrooms: 1, price: 1 });
 propertySchema.index({ hostId: 1 });
 
 const Property = mongoose.model("Property", propertySchema);

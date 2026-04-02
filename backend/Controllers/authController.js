@@ -2,10 +2,16 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ErrorResponse from "../utils/ErrorResponse.js";
 import { User } from "../Models/index.js";
 import sendTokenResponse from "../utils/sendTokenResponse.js";
+import { sendOTP, verifyOTP as verifyOTPCode } from "../services/otpService.js";
+import { verifyGoogleToken } from "../services/googleAuthService.js";
 
+// ==================== DEPRECATED: OLD EMAIL/PASSWORD AUTH ====================
+// These endpoints are no longer used in the unified auth system
+
+/*
 // @desc    Register user
 // @route   POST /api/auth/register
-// @access  Public 
+// @access  Public
 export const register = asyncHandler(async (req, res, next) => {
   const { name, email, password, role } = req.body;
 
@@ -73,6 +79,9 @@ export const login = asyncHandler(async (req, res, next) => {
   // Send token response
   sendTokenResponse(user, 200, res);
 });
+*/
+
+// ==================== ACTIVE AUTH ENDPOINTS ====================
 
 // @desc    Logout user / clear cookie
 // @route   POST /api/auth/logout
@@ -81,6 +90,8 @@ export const logout = asyncHandler(async (req, res, next) => {
   res.cookie("token", "none", {
     expires: new Date(Date.now() + 10 * 1000), // 10 seconds
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   });
 
   res.status(200).json({
@@ -108,8 +119,308 @@ export const getMe = asyncHandler(async (req, res, next) => {
       email: user.email,
       role: user.role,
       profilePhoto: user.profilePhoto,
+      phone: user.phone,
+      phoneVerified: user.phoneVerified || false,
       authProvider: user.authProvider,
+      accountType: user.accountType || "free",
+      contactViewsUsed: user.contactViewsUsed || 0,
+      propertiesListedThisMonth: user.propertiesListedThisMonth || 0,
       createdAt: user.createdAt,
     },
   });
+});
+
+// @desc    Update user profile
+// @route   PUT /api/auth/me
+// @access  Private
+export const updateProfile = asyncHandler(async (req, res, next) => {
+  const { name, profilePhoto } = req.body;
+
+  // Find user
+  const user = await User.findById(req.user.id);
+
+  if (!user) {
+    return next(new ErrorResponse("User not found", 404));
+  }
+
+  // Validate name if provided
+  if (name !== undefined) {
+    if (!name || name.trim().length < 2) {
+      return next(new ErrorResponse("Name must be at least 2 characters", 400));
+    }
+    if (name.trim().length > 50) {
+      return next(new ErrorResponse("Name cannot exceed 50 characters", 400));
+    }
+    user.name = name.trim();
+  }
+
+  // Update profile photo if provided
+  if (profilePhoto !== undefined) {
+    user.profilePhoto = profilePhoto;
+  }
+
+  // Save updated user (skip validation for existing users without required fields)
+  await user.save({ validateBeforeSave: false });
+
+  res.status(200).json({
+    success: true,
+    message: "Profile updated successfully",
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profilePhoto: user.profilePhoto,
+      phone: user.phone,
+      phoneVerified: user.phoneVerified || false,
+      authProvider: user.authProvider,
+      accountType: user.accountType || "free",
+      contactViewsUsed: user.contactViewsUsed || 0,
+      propertiesListedThisMonth: user.propertiesListedThisMonth || 0,
+      createdAt: user.createdAt,
+    },
+  });
+});
+// ==================== PHONE/OTP AUTHENTICATION ====================
+
+// @desc    Send OTP to phone number
+// @route   POST /api/auth/send-otp
+// @access  Public
+export const sendOtp = asyncHandler(async (req, res, next) => {
+  const { phoneNumber } = req.body;
+
+  // Validate phone number
+  if (!phoneNumber) {
+    return next(new ErrorResponse("Please provide a phone number", 400));
+  }
+
+  // Normalize phone number (ensure +91 prefix)
+  let normalizedPhone = phoneNumber.trim();
+  if (!normalizedPhone.startsWith("+91")) {
+    // If user entered without country code, add +91
+    normalizedPhone = `+91${normalizedPhone.replace(/^0+/, "")}`;
+  }
+
+  // Send OTP via Twilio
+  const result = await sendOTP(normalizedPhone);
+
+  if (!result.success) {
+    return next(new ErrorResponse(result.message, 400));
+  }
+
+  // Check if user exists with this phone number
+  const existingUser = await User.findOne({ phone: normalizedPhone });
+  const isNewUser = !existingUser;
+
+  res.status(200).json({
+    success: true,
+    message: result.message,
+    expiresIn: result.expiresIn,
+    isNewUser, // Tell frontend if this is a new user
+  });
+});
+
+// @desc    Verify OTP and login/register user
+// @route   POST /api/auth/verify-otp
+// @access  Public
+export const verifyOtp = asyncHandler(async (req, res, next) => {
+  const { phoneNumber, otp } = req.body;
+
+  // Validate required fields
+  if (!phoneNumber || !otp) {
+    return next(new ErrorResponse("Please provide phone number and OTP", 400));
+  }
+
+  // Normalize phone number
+  let normalizedPhone = phoneNumber.trim();
+  if (!normalizedPhone.startsWith("+91")) {
+    normalizedPhone = `+91${normalizedPhone.replace(/^0+/, "")}`;
+  }
+
+  // Verify OTP
+  const otpResult = verifyOTPCode(normalizedPhone, otp.toString());
+
+  if (!otpResult.verified) {
+    return next(new ErrorResponse(otpResult.message, 400));
+  }
+
+  // Check if user exists with this phone number
+  const user = await User.findOne({ phone: normalizedPhone });
+
+  if (user) {
+    // Existing user - login
+    user.phoneVerified = true;
+    // Use validateBeforeSave: false to avoid triggering validation for existing users
+    // This is necessary because old users might not have the 'city' field
+    await user.save({ validateBeforeSave: false });
+    sendTokenResponse(user, 200, res);
+  } else {
+    // New user - return flag to complete signup
+    res.status(200).json({
+      success: true,
+      needsSignup: true,
+      phone: normalizedPhone,
+      message: "Phone verified. Please complete your profile.",
+    });
+  }
+});
+
+// ==================== GOOGLE AUTHENTICATION ====================
+
+// @desc    Login/Register with Google
+// @route   POST /api/auth/google-login
+// @access  Public
+export const googleLogin = asyncHandler(async (req, res, next) => {
+  const { credential } = req.body;
+
+  // Validate credential
+  if (!credential) {
+    return next(new ErrorResponse("Please provide Google credential", 400));
+  }
+
+  // Verify Google token
+  let googleUser;
+  try {
+    googleUser = await verifyGoogleToken(credential);
+  } catch (error) {
+    return next(new ErrorResponse("Invalid Google credential", 401));
+  }
+
+  // Check if user exists with this Google ID or email
+  let user = await User.findOne({
+    $or: [
+      { googleId: googleUser.googleId },
+      { email: googleUser.email },
+    ],
+  });
+
+  if (user) {
+    // Existing user - login directly
+    // Update profile photo if changed
+    if (user.profilePhoto !== googleUser.profilePhoto) {
+      user.profilePhoto = googleUser.profilePhoto;
+    }
+    // Ensure googleId is set (in case they matched by email)
+    if (!user.googleId) {
+      user.googleId = googleUser.googleId;
+    }
+    await user.save({ validateBeforeSave: false });
+    sendTokenResponse(user, 200, res, { isNewUser: false });
+  } else {
+    // New user - create account immediately (no phone required)
+    const newUser = await User.create({
+      name: googleUser.name,
+      email: googleUser.email,
+      googleId: googleUser.googleId,
+      profilePhoto: googleUser.profilePhoto,
+      authProvider: "google",
+      role: "guest",
+      city: "Not set",
+      phoneVerified: false,
+    });
+
+    sendTokenResponse(newUser, 201, res, { isNewUser: true });
+  }
+});
+
+// @desc    Complete signup with name and city
+// @route   POST /api/auth/complete-signup
+// @access  Public
+export const completeSignup = asyncHandler(async (req, res, next) => {
+  const { phone, name, city, googleId, email, profilePhoto, role } = req.body;
+
+  // Validate required fields
+  if (!name || !city) {
+    return next(new ErrorResponse("Please provide name and city", 400));
+  }
+
+  // Normalize phone number if provided
+  let normalizedPhone = null;
+  if (phone) {
+    normalizedPhone = phone.trim();
+    if (!normalizedPhone.startsWith("+91")) {
+      normalizedPhone = `+91${normalizedPhone.replace(/^0+/, "")}`;
+    }
+
+    // Check if user already exists with this phone
+    const existingUser = await User.findOne({ phone: normalizedPhone });
+    if (existingUser) {
+      return next(
+        new ErrorResponse("User already exists with this phone number", 400),
+      );
+    }
+  }
+
+  // Check if email already exists (for Google users)
+  if (email) {
+    const existingEmailUser = await User.findOne({ email });
+    if (existingEmailUser) {
+      return next(
+        new ErrorResponse("User already exists with this email", 400),
+      );
+    }
+  }
+
+  // Determine auth provider
+  const authProvider = googleId ? "google" : "phone";
+
+  // Create new user
+  const user = await User.create({
+    name: name.trim(),
+    city: city.trim(),
+    phone: normalizedPhone || undefined,
+    phoneVerified: !!normalizedPhone,
+    email: email || undefined,
+    googleId: googleId || undefined,
+    profilePhoto: profilePhoto || "",
+    authProvider,
+    role: role || "guest",
+  });
+
+  sendTokenResponse(user, 201, res);
+});
+
+// ==================== LINK PHONE TO EXISTING ACCOUNT ====================
+
+// @desc    Link and verify phone number for logged-in user
+// @route   POST /api/auth/link-phone
+// @access  Private
+export const linkPhone = asyncHandler(async (req, res, next) => {
+  const { phoneNumber, otp } = req.body;
+
+  if (!phoneNumber || !otp) {
+    return next(new ErrorResponse("Please provide phone number and OTP", 400));
+  }
+
+  // Normalize phone number
+  let normalizedPhone = phoneNumber.trim();
+  if (!normalizedPhone.startsWith("+91")) {
+    normalizedPhone = `+91${normalizedPhone.replace(/^0+/, "")}`;
+  }
+
+  // Verify OTP
+  const otpResult = verifyOTPCode(normalizedPhone, otp.toString());
+  if (!otpResult.verified) {
+    return next(new ErrorResponse(otpResult.message, 400));
+  }
+
+  // Check if phone is already used by another user
+  const existingUser = await User.findOne({ phone: normalizedPhone });
+  if (existingUser && existingUser._id.toString() !== req.user.id) {
+    return next(
+      new ErrorResponse("This phone number is already linked to another account", 400),
+    );
+  }
+
+  // Update the current user's phone
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    return next(new ErrorResponse("User not found", 404));
+  }
+
+  user.phone = normalizedPhone;
+  user.phoneVerified = true;
+  await user.save({ validateBeforeSave: false });
+
+  sendTokenResponse(user, 200, res);
 });

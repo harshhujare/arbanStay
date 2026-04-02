@@ -1,0 +1,118 @@
+# Client-Side API Caching Strategy
+
+Avoid redundant API calls when navigating between pages by caching responses in memory (React state/context) and syncing to `localStorage` with a TTL. Data is only re-fetched from the API when the cache is stale or the page is hard-refreshed.
+
+---
+
+## How It Works
+
+```
+First visit to page  →  cache miss  →  fetch API  →  store in memory + localStorage (with timestamp)
+Navigate away        →  component unmounts, memory cache lives in context
+Return to page       →  cache hit (memory)  →  render instantly, NO API call
+Hard refresh         →  memory wiped  →  check localStorage TTL
+  └─ TTL valid       →  render from localStorage instantly, validate in background
+  └─ TTL expired     →  fetch API, update cache
+Mutation (add/edit/delete) → invalidate relevant cache key → next visit re-fetches
+```
+
+---
+
+## Proposed Changes
+
+### 1 — Core Cache Utility
+
+#### [NEW] `frontend/src/utils/cache.js`
+
+A lightweight utility for reading/writing TTL-stamped cache entries to `localStorage`.
+
+```js
+const CACHE_PREFIX = "urbanstay_cache_";
+const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+export const cache = {
+  set(key, data, ttlMs = DEFAULT_TTL_MS) { ... },
+  get(key) { ... /* returns null if expired */ },
+  invalidate(key) { ... },
+  invalidateAll() { ... },
+};
+```
+
+**TTL values by data type:**
+| Data | Suggested TTL | Reasoning |
+|---|---|---|
+| Home property listing | 5 min | Changes infrequently |
+| Host's own properties | 2 min | User may edit often |
+| Cities list | 30 min | Very static |
+| User profile | Permanent (session) | Already in AuthContext |
+
+---
+
+### 2 — `useCachedFetch` Hook
+
+#### [NEW] `frontend/src/hooks/useCachedFetch.js`
+
+A generic hook that wraps any async fetcher with cache-first logic:
+
+```js
+useCachedFetch(cacheKey, fetcher, options)
+// Returns: { data, loading, error, refresh }
+```
+
+- On mount: check localStorage → if valid TTL, return immediately (no API)  
+- If stale or missing: call `fetcher()`, cache result, return data  
+- `refresh()` – force re-fetch (used after mutations like add/delete property)  
+- `options.ttl` – override default TTL  
+- `options.enabled` – conditionally skip fetch (e.g. not logged in)
+
+---
+
+### 3 — Update Pages to Use the Hook
+
+#### [MODIFY] `HomePage.jsx`
+Replace the manual `useEffect` + `loadProperties()` pattern with `useCachedFetch`.  
+Cache key: `"properties_${JSON.stringify(filters)}"` (filter-aware).
+
+#### [MODIFY] `HostDashboard.jsx`
+Replace `useEffect` + `loadProperties()` with `useCachedFetch`.  
+Cache key: `"my_properties"`.  
+Call `refresh()` after deleting or editing a property (already has `onUpdate={loadProperties}`).
+
+---
+
+### 4 — Cache Invalidation on Mutations
+
+| Action | Cache key to invalidate |
+|---|---|
+| Add new property | `my_properties`, `properties_*` |
+| Edit a property | `my_properties`, `properties_*` |
+| Delete a property | `my_properties`, `properties_*` |
+| Update profile photo | (auth cache already handled by AuthContext) |
+
+The `propertyService` mutation methods will call `cache.invalidate()` after success, or the page's `refresh()` callback can be used.
+
+---
+
+## Open Questions
+
+> [!IMPORTANT]
+> **TTL Duration** — The proposed TTLs are:
+> - Home listings: 5 minutes
+> - Host dashboard properties: 2 minutes  
+> - Cities dropdown: 30 minutes
+>
+> Are these acceptable? Or do you want shorter/longer stale windows?
+
+> [!NOTE]
+> **Search/Filter Caching** — The home page has filters (city, price, bedrooms, etc.). Each unique filter combination would be cached separately. This is good for UX but can grow large. We can set a lower TTL or limit the number of cached filter combos. Let me know what you prefer.
+
+---
+
+## Verification Plan
+
+1. Open DevTools → Network tab
+2. Visit Home page — observe API call fires
+3. Navigate to Account, then back to Home — **no API call should fire**
+4. Wait 5 min (or reduce TTL for testing) — navigate back — API re-fetches
+5. Hard refresh — check localStorage, UI loads instantly before API responds
+6. Add a property → navigate back to dashboard → verify fresh data loads (cache invalidated)

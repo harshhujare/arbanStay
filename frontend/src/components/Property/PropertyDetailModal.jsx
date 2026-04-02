@@ -81,10 +81,11 @@ export default function PropertyDetailModal({ property, isOpen, onClose }) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-semibold text-gray-900">
-                      {formatPrice(property.pricePerNight)}
-                    </div>
-                    <div className="text-gray-600">per night</div>
+                    {/* Fix #2: use rentAmount (not pricePerNight), label as /month */}
+                  <div className="text-3xl font-semibold text-gray-900">
+                    {formatPrice(property.rentAmount || 0)}
+                  </div>
+                  <div className="text-gray-600">per month</div>
                   </div>
                 </div>
               </div>
@@ -113,12 +114,13 @@ export default function PropertyDetailModal({ property, isOpen, onClose }) {
               </div>
 
               {/* Host Info */}
-              {property.host && (
+              {/* Fix #3: backend populates host as hostId, not host */}
+              {property.hostId && (
                 <div className="mb-6">
                   <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                    Hosted by {property.host.name}
+                    Hosted by {property.hostId.name}
                   </h3>
-                  <p className="text-gray-600">{property.host.email}</p>
+                  <p className="text-gray-600">{property.hostId.email}</p>
                 </div>
               )}
 

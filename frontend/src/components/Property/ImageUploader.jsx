@@ -4,9 +4,22 @@ import { X, Upload, Trash2, Loader2 } from "lucide-react";
 export default function ImageUploader({
   images,
   onImagesChange,
-  maxImages = 4,
+  maxImages = 5,
 }) {
   const [dragActive, setDragActive] = useState(false);
+
+  // Fix #4: Revoke object URLs when images are removed to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      // Cleanup all preview URLs on unmount
+      images.forEach((img) => {
+        if (img.preview && img.preview.startsWith("blob:")) {
+          URL.revokeObjectURL(img.preview);
+        }
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFiles = async (files) => {
     if (!files || files.length === 0) return;
@@ -91,6 +104,11 @@ export default function ImageUploader({
   };
 
   const removeImage = (index) => {
+    const removed = images[index];
+    // Fix #4: Revoke the blob URL immediately when an image is removed
+    if (removed?.preview && removed.preview.startsWith("blob:")) {
+      URL.revokeObjectURL(removed.preview);
+    }
     const newImages = images.filter((_, i) => i !== index);
     onImagesChange(newImages);
   };

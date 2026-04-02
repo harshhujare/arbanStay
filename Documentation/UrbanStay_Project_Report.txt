@@ -1,0 +1,795 @@
+================================================================================
+                              INDEX
+================================================================================
+
+Sr. No    Contents                                            Page No
+------------------------------------------------------------------------
+1         Introduction to Project
+              > Introduction
+              > Working of System
+              > Needs & Scope of System
+              > Organization Profile                          1 - 5
+
+2         Proposed System
+              > Objectives
+              > SRS (Software Requirements Specification)     6 - 7
+
+3         System Analysis
+              > ERD (Entity Relationship Diagram)
+              > System Requirements
+                  * Hardware Requirements
+                  * Software Requirements                     8 - 15
+
+4         System Design
+              > Database Design                               16 - 21
+
+5         User Manual
+              > Installation Process
+              > How to Use                                    22 - 25
+
+6         Conclusion & Suggestions
+              > Conclusion
+              > Suggestions
+              > Future Enhancements                          26 - 30
+
+7         Bibliography / References                          31 - 32
+
+
+================================================================================
+                    UrbanStay - Online Property Rental Platform
+                              Chapter - I
+                         Introduction To Project
+================================================================================
+                              BCA III SEM VI
+
+
+================================================================================
+Introduction
+================================================================================
+
+UrbanStay is a modern web-based property rental platform designed to connect
+property owners (Hosts) with individuals looking for short-term or long-term
+accommodation (Guests). The platform streamlines the entire process of listing,
+discovering, and booking rental properties through a clean and intuitive
+interface inspired by globally popular platforms like Airbnb.
+
+In the current digital era, finding suitable accommodation and managing
+property rentals through traditional methods is time-consuming, inefficient,
+and prone to miscommunication. UrbanStay addresses these challenges by providing
+a centralized, digital platform that makes the entire rental workflow seamless
+for both hosts and guests.
+
+This documentation covers the system's architecture, features, modules, database
+design, and implementation strategy, serving as a comprehensive guide for
+developers, evaluators, and stakeholders involved in the project.
+
+Key Features:
+
+  * User Role Management : Manages three distinct roles - Guest, Host, and
+    Admin - each with specific access rights and capabilities.
+
+  * Property Listings : Hosts can create detailed property listings with
+    images, descriptions, location, amenities, rent amount, and availability.
+
+  * Search & Discovery : Guests can search and filter available properties by
+    city, date range, number of guests, and price.
+
+  * Booking System : Guests can raise booking requests with check-in/check-out
+    dates. Hosts can accept or reject bookings. Double booking is prevented.
+
+  * Authentication : Supports phone-based OTP authentication (via Twilio) and
+    Google OAuth login, secured with JWT tokens.
+
+  * Payment Integration : Integrated with Razorpay payment gateway to handle
+    online payments for premium accounts and bookings.
+
+  * Image Management : Property images are uploaded and stored via Cloudinary,
+    a cloud-based media management service.
+
+  * Admin Panel : Administrators can monitor users, manage properties, view
+    booking data, and export reports in CSV format.
+
+  * Real-time Notifications : Socket.io is used for real-time booking status
+    updates and host-guest communication features.
+
+  * Premium Accounts : Users can upgrade to premium accounts which unlock
+    higher limits for property listings and contact view requests.
+
+
+================================================================================
+Working of System
+================================================================================
+
+UrbanStay is a full-stack web application using a React.js frontend and a
+Node.js + Express.js backend, with MongoDB as the database. Here is an overview
+of how the system components work together:
+
+1. Frontend Interface:
+   - User Interface (UI): A responsive, card-based browser interface built
+     with React.js and Vite allows users to register, browse properties,
+     manage listings, and track bookings.
+   - Property Listings: Displays full property cards with images, price,
+     location, rent type, and host contact options.
+   - Dashboard: Separate dashboards for Guests and Hosts to manage their
+     respective activities.
+
+2. Backend Infrastructure:
+   - Server-Side: Node.js with Express.js handles all REST API requests
+     for authentication, property management, bookings, payments, and admin
+     operations.
+   - Database Management: MongoDB (via Mongoose ODM) stores all user data,
+     property listings, and booking records.
+
+3. Authentication System:
+   - Phone OTP Registration: New users register with their phone number.
+     An OTP is sent via Twilio SMS for verification.
+   - Google OAuth: Users can sign in using their Google account.
+   - JWT Tokens: Authenticated sessions are managed securely using JSON
+     Web Tokens stored in HTTP-only cookies.
+
+4. Property & Booking Flow:
+   - Hosts create listings with all required details including images,
+     uploaded directly to Cloudinary.
+   - Guests search for available properties and submit booking requests
+     for specific date ranges.
+   - Hosts review and accept or reject each booking request.
+   - The system validates date availability to prevent double booking.
+
+5. Payment Gateway:
+   - Razorpay is integrated for processing payments related to premium
+     account upgrades.
+
+6. Admin Operations:
+   - Admins have a dedicated dashboard to oversee users, properties,
+     and bookings, and can export data as CSV reports.
+
+7. Security Measures:
+   - JWT-based authentication with role-based access control (RBAC).
+   - Bcrypt password hashing (legacy support).
+   - Secure HTTP-only cookies for token storage.
+   - Input validation and Mongoose schema-level validation.
+
+
+================================================================================
+Needs & Scope of System
+================================================================================
+
+Developing UrbanStay addresses various real-world needs in the property rental
+domain. Below are the key aspects covered:
+
+Guest Panel:
+  Guests can register on the platform, search for properties based on their
+  preferred city, travel dates, and number of guests. They can view detailed
+  property information, contact hosts, and create booking requests. They can
+  also track all their upcoming and past bookings from their personal dashboard.
+
+Host Panel:
+  Hosts have a separate management interface where they can list new rental
+  properties, upload photos, set pricing, and manage their property details.
+  Hosts receive booking requests from guests and can approve or reject them.
+  They can also track their property performance (views, likes, contact requests).
+
+Admin Panel:
+  The admin has a dedicated panel to monitor all platform activity. The admin
+  can manage user accounts, moderate property listings, track booking data,
+  and export reports in CSV format for external analysis.
+
+Freemium Account Model:
+  The system implements a freemium model where free users have limited monthly
+  property listings and contact view allowances. Users can upgrade to premium
+  for higher limits, processed securely via Razorpay.
+
+Reduce Manual Work:
+  By digitizing property listing, searching, and booking, UrbanStay eliminates
+  the need for phone calls, physical visits, and paper-based agreements. It
+  reduces human error and speeds up the rental process significantly.
+
+Real-Time Communication:
+  The system uses Socket.io to provide real-time updates for booking status
+  changes and notifications to both guests and hosts.
+
+Scalability:
+  The modular architecture using React components on the frontend and
+  Express routes/controllers on the backend allows the system to scale
+  easily with new features and increasing user loads.
+
+
+================================================================================
+Organization Profile
+================================================================================
+
+  * UrbanStay is a web-based property rental solution that connects guests
+    seeking accommodation with property owners looking to rent their spaces.
+
+  * The platform caters to multiple user types — Guests, Hosts, and Admins —
+    offering role-specific features and dashboards for a personalized experience.
+
+  * UrbanStay provides a user-friendly, modern interface with card-based
+    property listings, image galleries, a booking calendar, and interactive
+    search filters to enhance the property discovery experience.
+
+  * By integrating trusted services like Twilio for OTP verification, Google
+    OAuth for social login, Cloudinary for image storage, and Razorpay for
+    payments, UrbanStay delivers a reliable and secure rental experience.
+
+  * The platform is designed for the Indian rental market with phone number
+    validation in the +91 format and INR-based pricing, making it practical
+    and relevant for Indian users.
+
+  * UrbanStay's freemium model ensures that casual users can access the
+    platform for free while offering premium features for power users who
+    need higher operational limits.
+
+
+================================================================================
+                    UrbanStay - Online Property Rental Platform
+                              Chapter - II
+                             Proposed System
+================================================================================
+                              BCA III SEM VI
+
+
+================================================================================
+Proposed System
+================================================================================
+
+UrbanStay is proposed as an efficient and convenient digital platform for
+property rental management. The main goal is to streamline the process of
+listing and discovering rental properties, making the experience accessible
+and hassle-free for both hosts and guests.
+
+The system integrates all core rental operations — from property listing and
+search to booking management and payment processing — into a single unified
+web platform. This eliminates the fragmentation typically seen when using
+multiple tools or relying on manual processes for property rentals.
+
+Objectives:
+
+  1. To provide a centralized platform for hosts to list and manage rental
+     properties with ease.
+  2. To enable guests to search, filter, and book properties based on their
+     specific requirements.
+  3. To implement a secure authentication system using phone OTP and Google
+     OAuth with JWT-based session management.
+  4. To prevent double booking through date-range validation at the time of
+     reservation.
+  5. To provide an admin portal for monitoring and moderating all platform
+     activities.
+  6. To integrate a payment gateway (Razorpay) for secure online payments.
+  7. To use cloud-based image management (Cloudinary) for property photos.
+  8. To implement real-time notifications using Socket.io.
+  9. To build a scalable and maintainable full-stack web application.
+
+SRS - Software Requirements Specification:
+
+  Functional Requirements:
+
+  FR-1: User Authentication & Roles
+    FR-1.1: The system shall allow users to register using their phone number
+            with OTP verification (via Twilio).
+    FR-1.2: The system shall support Google OAuth-based login.
+    FR-1.3: The system shall allow selecting a role at the time of registration:
+            Guest or Host.
+    FR-1.4: The system shall maintain user sessions using JWT tokens stored
+            in HTTP-only cookies.
+    FR-1.5: The system shall support three roles: Guest, Host, and Admin,
+            each with specific permissions.
+
+  FR-2: User Profile Management
+    FR-2.1: The system shall allow users to view their profile information.
+    FR-2.2: The system shall allow users to update their name and profile photo.
+    FR-2.3: The system shall track account type (free / premium) and monthly
+            usage limits for each user.
+
+  FR-3: Property Listing Management (Host)
+    FR-3.1: Hosts shall be able to create a property listing with the following
+            details:
+              - Title, Description, City, Full Address
+              - Rent Amount and Rent Type (per person / entire property)
+              - Maximum number of guests
+              - GPS Coordinates (latitude & longitude)
+              - Property images (uploaded to Cloudinary)
+              - Amenities list
+    FR-3.2: Hosts shall be able to edit and update their listing details.
+    FR-3.3: Hosts shall be able to delete their property listing.
+    FR-3.4: The system shall track property views, likes, and contact requests.
+    FR-3.5: Free users shall be limited to 2 property listings per month;
+            premium users shall be allowed up to 20.
+
+  FR-4: Property Discovery & Search (Guest)
+    FR-4.1: The system shall display all available and active property listings.
+    FR-4.2: Guests shall be able to search listings by city, date range, and
+            number of guests.
+    FR-4.3: Guests shall be able to filter listings by price range.
+    FR-4.4: Guests shall be able to view detailed property information including
+            images, description, amenities, and host contact.
+
+  FR-5: Booking Management
+    FR-5.1: Guests shall be able to submit a booking request with check-in
+            and check-out dates and number of guests.
+    FR-5.2: The system shall validate date availability and prevent
+            double booking for the same property.
+    FR-5.3: Hosts shall be able to view, accept, or reject incoming booking
+            requests.
+    FR-5.4: Guests shall be able to view their upcoming and past bookings.
+    FR-5.5: Booking status shall be one of: pending, confirmed, rejected,
+            or cancelled.
+
+  FR-6: Admin Panel
+    FR-6.1: Admins shall be able to view, manage, and moderate all users.
+    FR-6.2: Admins shall be able to view, moderate, and suspend property
+            listings.
+    FR-6.3: Admins shall be able to view all booking records.
+    FR-6.4: Admins shall be able to export user, property, and booking
+            data as CSV reports.
+
+  FR-7: Payment Integration
+    FR-7.1: The system shall integrate Razorpay for processing premium
+            account upgrade payments.
+
+  FR-8: Authorization & Access Control
+    FR-8.1: The system shall restrict property listing creation to users
+            with the Host role.
+    FR-8.2: The system shall restrict booking actions to users with the
+            Guest role.
+    FR-8.3: Users shall only be able to manage their own data.
+    FR-8.4: Admin routes shall be restricted to users with the Admin role.
+
+  Non-Functional Requirements:
+
+  NFR-1: Security
+    - JWT tokens shall expire after 7 days and be stored in HTTP-only cookies.
+    - Passwords shall be hashed using bcrypt before storage.
+    - All API routes shall validate user roles before granting access.
+
+  NFR-2: Performance
+    - MongoDB indexes shall be used on commonly queried fields such as city,
+      hostId, guestId, and propertyId to ensure fast query performance.
+    - Cloudinary CDN delivery shall be used for all property images.
+
+  NFR-3: Usability
+    - The platform shall be accessible and usable on all modern web browsers.
+    - The UI shall be clean, intuitive, and responsive.
+
+  NFR-4: Scalability
+    - The system shall use a modular MVC-like architecture to support
+      easy addition of new features and routes.
+    - Socket.io shall handle real-time events for notifications without
+      blocking the main request-response cycle.
+
+
+================================================================================
+                    UrbanStay - Online Property Rental Platform
+                              Chapter - III
+                             System Analysis
+================================================================================
+                              BCA III SEM VI
+
+
+================================================================================
+ERD - Entity Relationship Diagram (Description)
+================================================================================
+
+The UrbanStay system has three primary entities: User, Property, and Booking.
+Their relationships are described below:
+
+1. USER
+   - A User can have one of three roles: Guest, Host, or Admin.
+   - A Host (User) can create many Property listings (One-to-Many).
+   - A Guest (User) can create many Booking records (One-to-Many).
+
+2. PROPERTY
+   - A Property belongs to exactly one Host (User).
+   - A Property can have many Bookings (One-to-Many).
+
+3. BOOKING
+   - A Booking is associated with one Guest (User), one Property, and one Host.
+   - Booking records store the date range, number of guests, total price, and
+     current status.
+
+Relationships Summary:
+   USER (Host) ---[1 to Many]---> PROPERTY
+   USER (Guest) ---[1 to Many]---> BOOKING
+   PROPERTY ---[1 to Many]---> BOOKING
+
+
+================================================================================
+System Requirements
+================================================================================
+
+Hardware Requirements (for Development):
+
+  * Processor  : Intel Core i3 (3rd Generation or above) / AMD Ryzen 3
+  * RAM        : 8 GB or above
+  * Storage    : 256 GB SSD minimum
+  * OS         : 64-bit Windows 10 / 11 or any modern Linux/macOS distribution
+  * Internet   : Broadband connection (required for cloud service APIs)
+
+Software Requirements:
+
+  * IDE / Editor         : Visual Studio Code (VS Code)
+  * Runtime              : Node.js (v18 or above)
+  * Package Manager      : npm (Node Package Manager)
+  * Frontend Framework   : React.js (with Vite as build tool)
+  * Backend Framework    : Express.js (v5)
+  * Database             : MongoDB (cloud-hosted via MongoDB Atlas)
+  * ODM                  : Mongoose (v8)
+  * Authentication       : JWT (jsonwebtoken), bcrypt, Google Auth Library
+  * OTP / SMS            : Twilio
+  * Image Storage        : Cloudinary
+  * Payment Gateway      : Razorpay
+  * Real-time            : Socket.io
+  * Version Control      : Git
+
+
+================================================================================
+                    UrbanStay - Online Property Rental Platform
+                              Chapter - IV
+                              System Design
+================================================================================
+                              BCA III SEM VI
+
+
+================================================================================
+Database Design
+================================================================================
+
+------------------------------------------------------------
+Table / Collection 1: USER
+------------------------------------------------------------
+
+Field Name                  Data Type       Description
+--------------------------  --------------  ---------------------------------
+_id                         ObjectId        Unique identifier (auto-generated)
+name                        String          Full name of the user
+email                       String          Email address (optional, from Google)
+city                        String          City of the user
+password                    String          Hashed password (legacy)
+role                        String          Role: guest / host / admin
+profilePhoto                String          Cloudinary URL for profile image
+phone                       String          Phone number (+91XXXXXXXXXX)
+phoneVerified               Boolean         Whether phone OTP is verified
+accountType                 String          Account type: free / premium
+contactViewsUsed            Number          Monthly contact view count
+contactViewsResetDate       Date            Date when contact views were reset
+propertiesListedThisMonth   Number          Monthly property listing count
+propertiesListedResetDate   Date            Date when listing count was reset
+googleId                    String          Google OAuth ID (optional)
+authProvider                String          Auth method: phone / google
+createdAt                   Date            Account creation timestamp
+updatedAt                   Date            Last update timestamp
+
+------------------------------------------------------------
+Table / Collection 2: PROPERTY
+------------------------------------------------------------
+
+Field Name              Data Type       Description
+----------------------  --------------  ---------------------------------
+_id                     ObjectId        Unique identifier (auto-generated)
+title                   String          Property title (10-100 characters)
+description             String          Detailed description (50-2000 chars)
+location.city           String          City where property is located
+location.address        String          Full address of the property
+rentType                String          per_person / entire_property
+rentAmount              Number          Monthly rent amount (INR)
+coordinates.latitude    Number          GPS latitude
+coordinates.longitude   Number          GPS longitude
+maxGuests               Number          Maximum number of guests allowed
+images                  [String]        Array of Cloudinary image URLs
+amenities               [String]        List of amenities provided
+hostId                  ObjectId        Reference to the Host (User)
+isAvailable             Boolean         Whether property is currently available
+adminStatus             String          active / suspended / pending_review
+views                   Number          Total view count
+likes                   Number          Total like count
+likedBy                 [ObjectId]      Array of User IDs who liked it
+contactRequests         Number          Number of contact requests received
+viewHistory             [Object]        Date-wise view count history
+createdAt               Date            Listing creation timestamp
+updatedAt               Date            Last update timestamp
+
+------------------------------------------------------------
+Table / Collection 3: BOOKING
+------------------------------------------------------------
+
+Field Name      Data Type       Description
+--------------  --------------  ---------------------------------
+_id             ObjectId        Unique identifier (auto-generated)
+guestId         ObjectId        Reference to the Guest (User)
+propertyId      ObjectId        Reference to the booked Property
+hostId          ObjectId        Reference to the Host (User)
+checkIn         Date            Check-in date
+checkOut        Date            Check-out date
+guests          Number          Number of guests for the booking
+totalPrice      Number          Total calculated price for the stay
+status          String          pending / confirmed / rejected / cancelled
+createdAt       Date            Booking creation timestamp
+updatedAt       Date            Last update timestamp
+
+
+================================================================================
+API Route Design
+================================================================================
+
+Authentication Routes (/api/auth):
+  POST   /register          - Register a new user with phone OTP
+  POST   /login             - Login with phone/OTP or Google OAuth
+  POST   /logout            - Logout and clear session cookie
+  GET    /me                - Get the current logged-in user's profile
+  POST   /google            - Google OAuth login
+
+Property Routes (/api/properties):
+  GET    /                  - Get all available properties (with filters)
+  GET    /:id               - Get a single property by ID
+  POST   /                  - Create a new property listing (Host only)
+  PUT    /:id               - Update a property listing (Host only)
+  DELETE /:id               - Delete a property listing (Host only)
+  GET    /host/my-listings  - Get all listings by the logged-in host
+
+Booking Routes (/api/bookings):
+  POST   /                  - Create a new booking request (Guest only)
+  GET    /my-bookings       - Get all bookings for the logged-in guest
+  GET    /host/requests     - Get all booking requests for the host
+  PUT    /:id/status        - Accept or reject a booking (Host only)
+  DELETE /:id               - Cancel a booking
+
+Admin Routes (/api/admin):
+  GET    /users             - Get all users
+  PUT    /users/:id/role    - Update user role
+  GET    /properties        - Get all properties with filters
+  PUT    /properties/:id    - Update property status
+  GET    /bookings          - Get all booking records
+  GET    /reports           - Export CSV reports
+
+Payment Routes (/api/payments):
+  POST   /create-order      - Create a Razorpay payment order
+  POST   /verify            - Verify payment and upgrade account
+
+
+================================================================================
+                    UrbanStay - Online Property Rental Platform
+                              Chapter - V
+                               User Manual
+================================================================================
+                              BCA III SEM VI
+
+
+================================================================================
+Installation Process
+================================================================================
+
+Prerequisites:
+  - Node.js (v18 or above) must be installed.
+  - MongoDB Atlas account (or local MongoDB instance).
+  - Accounts for Cloudinary, Twilio, Razorpay, and Google Cloud Console
+    (for OAuth credentials).
+
+Backend Setup:
+
+  1. Open a terminal and navigate to the backend folder:
+         cd backend
+
+  2. Install all required Node.js dependencies:
+         npm install
+
+  3. Create a .env file in the backend folder with the following variables:
+         PORT=5000
+         MONGODB_URI=<your MongoDB connection string>
+         JWT_SECRET=<your JWT secret key>
+         JWT_EXPIRE=7d
+         CLOUDINARY_CLOUD_NAME=<your Cloudinary cloud name>
+         CLOUDINARY_API_KEY=<your Cloudinary API key>
+         CLOUDINARY_API_SECRET=<your Cloudinary API secret>
+         TWILIO_ACCOUNT_SID=<your Twilio Account SID>
+         TWILIO_AUTH_TOKEN=<your Twilio Auth Token>
+         TWILIO_PHONE_NUMBER=<your Twilio phone number>
+         RAZORPAY_KEY_ID=<your Razorpay key ID>
+         RAZORPAY_KEY_SECRET=<your Razorpay key secret>
+         GOOGLE_CLIENT_ID=<your Google OAuth client ID>
+         FRONTEND_URL=http://localhost:5173
+
+  4. Start the backend server:
+         npm run dev
+
+  5. The backend API will be running at http://localhost:5000
+
+Frontend Setup:
+
+  1. Open a new terminal and navigate to the frontend folder:
+         cd frontend
+
+  2. Install all required npm packages:
+         npm install
+
+  3. Start the development server:
+         npm run dev
+
+  4. Open your browser and navigate to:
+         http://localhost:5173
+
+
+================================================================================
+How to Use
+================================================================================
+
+As a Guest:
+
+  1. Open the application in your browser.
+  2. Click "Sign Up" or "Register" and enter your name, city, phone number,
+     and select the "Guest" role.
+  3. Verify your phone number using the OTP sent via SMS.
+  4. On the Home page, use the search bar to search by city, date, and guests.
+  5. Browse the property cards and click on a listing to view full details.
+  6. Click the "Book Now" or "Request Booking" button, select your dates and
+     number of guests, and submit the booking request.
+  7. Visit your Guest Dashboard to track the status of your bookings
+     (pending, confirmed, rejected, or cancelled).
+
+As a Host:
+
+  1. Register with the "Host" role, or upgrade your existing account to Host.
+  2. Navigate to the "Add Property" page from your dashboard or the navbar.
+  3. Fill in all required property details: title, description, city, address,
+     rent amount, number of guests, GPS coordinates, and amenities.
+  4. Upload at least one image for the property.
+  5. Submit the form to create your listing.
+  6. Navigate to "My Listings" to manage, edit, or delete your properties.
+  7. Go to "Booking Requests" to review incoming requests and accept or reject.
+
+As an Admin:
+
+  1. Log in with an account that has the "admin" role.
+  2. Access the admin panel from the navbar or by navigating to /admin.
+  3. Use the Users section to view, manage, and update user roles.
+  4. Use the Properties section to view and moderate property listings.
+  5. Use the Bookings section to view all platform-wide booking activity.
+  6. Use the Reports section to download CSV exports of platform data.
+
+
+================================================================================
+                    UrbanStay - Online Property Rental Platform
+                              Chapter - VI
+                         Conclusion & Suggestions
+================================================================================
+                              BCA III SEM VI
+
+
+================================================================================
+Conclusion
+================================================================================
+
+The development of UrbanStay marks a significant step toward modernizing the
+property rental experience in India. By providing a centralized, digital
+platform for connecting guests and hosts, the system eliminates the inefficiencies
+of manual property rental processes, reduces human errors, and brings transparency
+to the rental workflow.
+
+Throughout this project, the focus has been on building a robust and secure
+full-stack web application using modern technologies — React.js for an engaging
+user interface, Node.js and Express.js for a powerful backend API, and MongoDB
+for a flexible and scalable database. The integration of Twilio for OTP
+verification, Razorpay for payments, and Cloudinary for image management
+ensures that the platform is production-ready and reliable.
+
+The role-based access control system ensures that each type of user — Guest,
+Host, and Admin — has a tailored experience with appropriate permissions and
+restrictions. The freemium account model adds a business dimension to the
+platform, creating a sustainable model for future growth.
+
+UrbanStay stands as a complete, feature-rich property rental solution that
+can be deployed and used in real-world scenarios. Future enhancements can
+further expand its capabilities, contributing to a smarter and more connected
+rental ecosystem.
+
+
+================================================================================
+Suggestions
+================================================================================
+
+Following are areas identified for improvement and enhancement:
+
+1. Messaging System
+   Implement a full-featured in-app messaging system between guests and hosts
+   using Socket.io to allow direct communication without leaving the platform.
+
+2. Rating & Review System
+   Allow guests to rate and review properties after their stay, providing
+   social proof and improving trust in listings.
+
+3. Map Integration
+   Integrate Google Maps or Mapbox to display property locations on an
+   interactive map, helping guests visualize nearby options.
+
+4. Advanced Filtering
+   Add more granular search filters such as property type (apartment, villa,
+   room), number of bedrooms, pet-friendly options, and specific amenities.
+
+5. Calendar Sync
+   Allow hosts to sync their property availability calendar with external
+   calendar tools like Google Calendar.
+
+6. Mobile Application
+   Develop a mobile application (React Native) to provide a native mobile
+   experience for both iOS and Android users.
+
+7. Email Notifications
+   Integrate an email notification service (such as SendGrid or Nodemailer) to
+   send booking confirmations, reminders, and status updates via email.
+
+
+================================================================================
+Future Enhancements
+================================================================================
+
+If the platform continues to grow, the following key enhancements should be
+considered:
+
+1. AI-Powered Recommendations
+   Implement a recommendation engine that suggests properties to guests
+   based on their browsing history, preferences, and past bookings.
+
+2. Dynamic Pricing
+   Allow hosts to set dynamic pricing rules based on seasonality, local
+   events, and demand, similar to professional rental platforms.
+
+3. Identity Verification
+   Add a KYC (Know Your Customer) verification layer for both hosts and
+   guests to increase platform trust and safety.
+
+4. Cancellation & Refund Policies
+   Implement structured cancellation and refund policies with automated
+   Razorpay refund processing.
+
+5. Analytics Dashboard for Hosts
+   Provide hosts with detailed performance analytics: monthly views, booking
+   conversion rates, revenue charts, and peak demand periods.
+
+6. Multi-Currency & Multi-Language Support
+   Expand the platform to support multiple currencies and languages to
+   cater to a broader international audience.
+
+7. Accessibility Compliance
+   Ensure the platform meets WCAG 2.1 accessibility standards to be usable
+   by users with disabilities.
+
+
+================================================================================
+                    UrbanStay - Online Property Rental Platform
+                              Chapter - VII
+                         Bibliography / References
+================================================================================
+                              BCA III SEM VI
+
+
+================================================================================
+Bibliography / References
+================================================================================
+
+Online Resources:
+
+  * www.google.com
+  * www.youtube.com
+  * www.mongodb.com/docs
+  * www.expressjs.com
+  * www.react.dev
+  * www.npmjs.com
+  * www.cloudinary.com/documentation
+  * www.twilio.com/docs
+  * www.razorpay.com/docs
+  * www.socket.io/docs
+
+Technology Documentation:
+
+  * Node.js Official Documentation     - https://nodejs.org/en/docs
+  * Express.js Documentation           - https://expressjs.com
+  * Mongoose ODM Documentation         - https://mongoosejs.com/docs
+  * React.js Official Documentation    - https://react.dev
+  * JWT (jsonwebtoken) Documentation   - https://jwt.io
+  * Bcrypt npm Package                 - https://www.npmjs.com/package/bcrypt
+  * Multer File Upload Middleware      - https://www.npmjs.com/package/multer
+  * Vite Build Tool Documentation      - https://vitejs.dev
+
+
+================================================================================
+                         End of UrbanStay Project Report
+================================================================================

@@ -11,6 +11,11 @@ export const getProperties = asyncHandler(async (req, res, next) => {
   const { city, minPrice, maxPrice, amenities, bedrooms, q, guests, sortBy } =
     req.query;
 
+  // Pagination
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 20;
+  const skip = (page - 1) * limit;
+
   // Build query
   let query = {};
 
@@ -51,17 +56,34 @@ export const getProperties = asyncHandler(async (req, res, next) => {
   let sortCriteria = "-createdAt"; // Default: newest first
   if (sortBy === "price_asc") sortCriteria = "price";
   if (sortBy === "price_desc") sortCriteria = "-price";
-  if (q) sortCriteria = { score: { $meta: "textScore" }, ...sortCriteria }; // Text search relevance
+  if (q) sortCriteria = { score: { $meta: "textScore" } }; // Text search relevance
+
+  const total = await Property.countDocuments(query);
 
   const properties = await Property.find(query)
     .populate("hostId", "name email profilePicture")
     .sort(sortCriteria)
+    .skip(skip)
+    .limit(limit)
     .select(q ? { score: { $meta: "textScore" } } : {});
 
   res.status(200).json({
     success: true,
-    count: properties.length,
+    count: total,
+    page,
+    totalPages: Math.ceil(total / limit),
     data: properties,
+  });
+});
+
+// @desc    Get distinct cities that have property listings
+// @route   GET /api/properties/cities
+// @access  Public
+export const getCities = asyncHandler(async (req, res, next) => {
+  const cities = await Property.distinct("location.city");
+  res.status(200).json({
+    success: true,
+    data: cities.sort(),
   });
 });
 
@@ -78,6 +100,22 @@ export const getProperty = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse("Property not found", 404));
   }
 
+  // Track view (fire-and-forget, don't block response)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  Property.findOneAndUpdate(
+    { _id: property._id, "viewHistory.date": today },
+    { $inc: { views: 1, "viewHistory.$.count": 1 } },
+  ).then((result) => {
+    if (!result) {
+      // No entry for today yet, push a new one
+      Property.findByIdAndUpdate(property._id, {
+        $inc: { views: 1 },
+        $push: { viewHistory: { date: today, count: 1 } },
+      }).exec();
+    }
+  });
+
   res.status(200).json({
     success: true,
     data: property,
@@ -88,6 +126,27 @@ export const getProperty = asyncHandler(async (req, res, next) => {
 // @route   POST /api/properties
 // @access  Private (Guest can create, will auto-upgrade to Host)
 export const createProperty = asyncHandler(async (req, res, next) => {
+  // Require phone verification before listing
+  if (!req.user.phoneVerified) {
+    return next(
+      new ErrorResponse("Please verify your phone number before listing a property", 403),
+    );
+  }
+
+  // Reset monthly counters if needed
+  await req.user.resetMonthlyCountersIfNeeded();
+
+  // Check property listing limit
+  const limits = req.user.getAccountLimits();
+  if (req.user.propertiesListedThisMonth >= limits.propertyListings) {
+    return next(
+      new ErrorResponse(
+        `You have reached your monthly listing limit (${limits.propertyListings} for ${req.user.accountType} accounts). Upgrade to Premium for more listings.`,
+        403,
+      ),
+    );
+  }
+
   // Upgrade user to host if they're a guest
   if (req.user.role === "guest") {
     await req.user.upgradeToHost();
@@ -144,6 +203,10 @@ export const createProperty = asyncHandler(async (req, res, next) => {
   };
 
   const property = await Property.create(propertyData);
+
+  // Increment monthly listing counter
+  req.user.propertiesListedThisMonth += 1;
+  await req.user.save({ validateBeforeSave: false });
 
   res.status(201).json({
     success: true,
@@ -298,5 +361,171 @@ export const getUserProperties = asyncHandler(async (req, res, next) => {
     success: true,
     count: properties.length,
     data: properties,
+  });
+});
+
+// @desc    Get owner contact details
+// @route   GET /api/properties/:id/contact
+// @access  Private
+export const getOwnerContact = asyncHandler(async (req, res, next) => {
+  // Require phone verification before viewing contact
+  if (!req.user.phoneVerified) {
+    return next(
+      new ErrorResponse("Please verify your phone number to view owner contact details", 403),
+    );
+  }
+
+  // Find the property and populate host phone
+  const property = await Property.findById(req.params.id).populate(
+    "hostId",
+    "name phone",
+  );
+
+  if (!property) {
+    return next(new ErrorResponse("Property not found", 404));
+  }
+
+  if (!property.hostId) {
+    return next(new ErrorResponse("Owner information not available", 404));
+  }
+
+  // Reset monthly counters if needed
+  await req.user.resetMonthlyCountersIfNeeded();
+
+  // Check contact view limit
+  const limits = req.user.getAccountLimits();
+  const remaining = limits.contactViews - req.user.contactViewsUsed;
+
+  if (remaining <= 0) {
+    return res.status(403).json({
+      success: false,
+      error: `You have reached your monthly contact view limit (${limits.contactViews} for ${req.user.accountType} accounts). Upgrade to Premium for more contact views.`,
+      limitReached: true,
+      accountType: req.user.accountType,
+      limit: limits.contactViews,
+      used: req.user.contactViewsUsed,
+    });
+  }
+
+  // Increment contact views counter
+  req.user.contactViewsUsed += 1;
+  await req.user.save({ validateBeforeSave: false });
+
+  // Increment contactRequests on property
+  Property.findByIdAndUpdate(req.params.id, {
+    $inc: { contactRequests: 1 },
+  }).exec();
+
+  res.status(200).json({
+    success: true,
+    data: {
+      ownerName: property.hostId.name,
+      ownerPhone: property.hostId.phone,
+    },
+    remaining: limits.contactViews - req.user.contactViewsUsed,
+    limit: limits.contactViews,
+    used: req.user.contactViewsUsed,
+    accountType: req.user.accountType,
+  });
+});
+
+// @desc    Get property analytics/stats (for host dashboard)
+// @route   GET /api/properties/:id/stats
+// @access  Private (Owner only)
+export const getPropertyStats = asyncHandler(async (req, res, next) => {
+  const property = await Property.findById(req.params.id).select(
+    "views likes contactRequests viewHistory hostId title",
+  );
+
+  if (!property) {
+    return next(new ErrorResponse("Property not found", 404));
+  }
+
+  // Only owner can see stats
+  if (property.hostId.toString() !== req.user.id && req.user.role !== "admin") {
+    return next(
+      new ErrorResponse("Not authorized to view stats for this property", 403),
+    );
+  }
+
+  // Get last 30 days of view history
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+  const recentHistory = (property.viewHistory || [])
+    .filter((entry) => new Date(entry.date) >= thirtyDaysAgo)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  res.status(200).json({
+    success: true,
+    data: {
+      title: property.title,
+      views: property.views || 0,
+      likes: property.likes || 0,
+      contactRequests: property.contactRequests || 0,
+      viewHistory: recentHistory,
+    },
+  });
+});
+
+// @desc    Toggle like on a property (like/unlike)
+// @route   POST /api/properties/:id/like
+// @access  Private
+export const toggleLike = asyncHandler(async (req, res, next) => {
+  const property = await Property.findById(req.params.id).select(
+    "likedBy likes hostId",
+  );
+
+  if (!property) {
+    return next(new ErrorResponse("Property not found", 404));
+  }
+
+  const userId = req.user.id;
+  const alreadyLiked = property.likedBy.some((id) => id.toString() === userId);
+
+  if (alreadyLiked) {
+    // Unlike: remove user from likedBy and decrement likes
+    await Property.findByIdAndUpdate(req.params.id, {
+      $pull: { likedBy: userId },
+      $inc: { likes: -1 },
+    });
+    return res.status(200).json({
+      success: true,
+      liked: false,
+      likesCount: Math.max(0, (property.likes || 1) - 1),
+    });
+  } else {
+    // Like: add user to likedBy and increment likes
+    await Property.findByIdAndUpdate(req.params.id, {
+      $addToSet: { likedBy: userId },
+      $inc: { likes: 1 },
+    });
+    return res.status(200).json({
+      success: true,
+      liked: true,
+      likesCount: (property.likes || 0) + 1,
+    });
+  }
+});
+
+// @desc    Get like status for current user on a property
+// @route   GET /api/properties/:id/like-status
+// @access  Private
+export const getLikeStatus = asyncHandler(async (req, res, next) => {
+  const property = await Property.findById(req.params.id).select(
+    "likedBy likes",
+  );
+
+  if (!property) {
+    return next(new ErrorResponse("Property not found", 404));
+  }
+
+  const liked = property.likedBy.some((id) => id.toString() === req.user.id);
+
+  res.status(200).json({
+    success: true,
+    liked,
+    likesCount: property.likes || 0,
   });
 });

@@ -15,10 +15,18 @@ export const propertyService = {
   },
 
   /**
+   * Get distinct cities that have listings
+   */
+  async getCities() {
+    return await apiClient.get("/properties/cities");
+  },
+
+  /**
    * Get single property by ID
    */
   async getProperty(id) {
-    return await apiClient.get(`/properties/${id}`);
+    const response = await apiClient.get(`/properties/${id}`);
+    return response.data; // Extract data from {success, data} response
   },
 
   /**
@@ -83,6 +91,41 @@ export const propertyService = {
    */
   async deleteImage(publicId) {
     return await apiClient.post("/upload/image", { publicId });
+  },
+
+  /**
+   * Get owner contact details (checks account limits)
+   */
+  async getOwnerContact(propertyId) {
+    return await apiClient.get(`/properties/${propertyId}/contact`);
+  },
+
+  /**
+   * Update a property
+   */
+  async updateProperty(id, propertyData) {
+    return await apiClient.put(`/properties/${id}`, propertyData);
+  },
+
+  /**
+   * Get property analytics/stats (owner only)
+   */
+  async getPropertyStats(id) {
+    return await apiClient.get(`/properties/${id}/stats`);
+  },
+
+  /**
+   * Toggle like on a property (like/unlike)
+   */
+  async toggleLike(propertyId) {
+    return await apiClient.post(`/properties/${propertyId}/like`);
+  },
+
+  /**
+   * Get like status for current user on a property
+   */
+  async getLikeStatus(propertyId) {
+    return await apiClient.get(`/properties/${propertyId}/like-status`);
   },
 };
 

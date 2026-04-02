@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
    */
   const validateTokenInBackground = async () => {
     try {
-      const data = await authService.getCurrentUser();
+      const data = await authService.getMe();
       // Update cache with fresh data
       updateAuthCache(data.user);
       setUser(data.user);
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }) => {
    */
   const loadUser = async () => {
     try {
-      const data = await authService.getCurrentUser();
+      const data = await authService.getMe();
       setUser(data.user);
       setIsAuthenticated(true);
       updateAuthCache(data.user); // Cache the user data
@@ -100,27 +100,81 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ==================== PHONE/OTP AUTH ====================
+
   /**
-   * Login user
-   * @param {Object} credentials - { email, password }
+   * Send OTP to phone number
+   * @param {string} phoneNumber - 10-digit phone number
    */
-  const login = async (credentials) => {
-    const data = await authService.login(credentials);
-    setUser(data.user);
-    setIsAuthenticated(true);
-    updateAuthCache(data.user); // Cache user data
+  const sendOtp = async (phoneNumber) => {
+    const data = await authService.sendOtp(phoneNumber);
     return data;
   };
 
   /**
-   * Register new user
-   * @param {Object} userData - { name, email, password }
+   * Verify OTP (may require signup completion)
+   * @param {string} phoneNumber - 10-digit phone number
+   * @param {string} otp - 4-digit OTP code
+   * @returns {Object} Response - may contain {needsSignup: true} or {token, user}
    */
-  const register = async (userData) => {
-    const data = await authService.register(userData);
+  const verifyOtp = async (phoneNumber, otp) => {
+    const data = await authService.verifyOtp(phoneNumber, otp);
+
+    // Check if signup completion is needed
+    if (data.needsSignup) {
+      // Return data with needsSignup flag - don't login yet
+      return data;
+    }
+
+    // Existing user - login
     setUser(data.user);
     setIsAuthenticated(true);
-    updateAuthCache(data.user); // Cache user data
+    updateAuthCache(data.user);
+    return data;
+  };
+
+  // ==================== GOOGLE AUTH ====================
+
+  /**
+   * Google login - creates account immediately for new users
+   * @param {string} credential - Google ID token
+   * @returns {Object} Response with { user, isNewUser }
+   */
+  const googleLogin = async (credential) => {
+    const data = await authService.googleLogin(credential);
+
+    // Account is created/logged in immediately
+    setUser(data.user);
+    setIsAuthenticated(true);
+    updateAuthCache(data.user);
+    return data; // data.isNewUser tells frontend if this is a new signup
+  };
+
+  // ==================== LINK PHONE ====================
+
+  /**
+   * Link and verify phone number for logged-in user
+   * @param {string} phoneNumber - 10-digit phone number
+   * @param {string} otp - 4-digit OTP code
+   */
+  const linkPhone = async (phoneNumber, otp) => {
+    const data = await authService.linkPhone(phoneNumber, otp);
+    setUser(data.user);
+    updateAuthCache(data.user);
+    return data;
+  };
+
+  // ==================== COMPLETE SIGNUP ====================
+
+  /**
+   * Complete signup with all required data
+   * @param {Object} signupData - { phone, name, city, googleId?, email?, profilePhoto? }
+   */
+  const completeSignup = async (signupData) => {
+    const data = await authService.completeSignup(signupData);
+    setUser(data.user);
+    setIsAuthenticated(true);
+    updateAuthCache(data.user);
     return data;
   };
 
@@ -156,16 +210,34 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Update user in context and cache
+   * @param {Object} userData - Updated user data
+   */
+  const updateUser = (userData) => {
+    setUser(userData);
+    updateAuthCache(userData);
+  };
+
+  const isAdmin = user?.role === "admin";
+  const isPhoneVerified = user?.phoneVerified === true;
+
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
         isAuthenticated,
-        login,
-        register,
+        isAdmin,
+        isPhoneVerified,
+        sendOtp,
+        verifyOtp,
+        googleLogin,
+        linkPhone,
+        completeSignup,
         logout,
         loadUser,
+        updateUser,
       }}
     >
       {children}

@@ -3,8 +3,9 @@
  * @param {Object} user - User object from database
  * @param {Number} statusCode - HTTP status code
  * @param {Object} res - Express response object
+ * @param {Object} extraData - Optional extra fields to include in response
  */
-const sendTokenResponse = (user, statusCode, res) => {
+const sendTokenResponse = (user, statusCode, res, extraData = {}) => {
   // Generate JWT token
   const token = user.generateJWT();
 
@@ -15,7 +16,7 @@ const sendTokenResponse = (user, statusCode, res) => {
     ),
     httpOnly: true, // Prevents client-side JS from reading the cookie (XSS protection)
     secure: process.env.NODE_ENV === "production", // Use HTTPS in production
-    sameSite: "strict", // CSRF protection
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // "none" for cross-origin in production (Vercel+Render)
   };
 
   // Send response with cookie and user data
@@ -25,13 +26,17 @@ const sendTokenResponse = (user, statusCode, res) => {
     .json({
       success: true,
       token, // Also send in response body for mobile apps
+      ...extraData,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
         profilePhoto: user.profilePhoto,
+        phone: user.phone || null,
+        phoneVerified: user.phoneVerified || false,
         authProvider: user.authProvider,
+        accountType: user.accountType || "free",
       },
     });
 };

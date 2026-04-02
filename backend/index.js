@@ -52,6 +52,9 @@ app.get("/api/health", (req, res) => {
 import authRoutes from "./Routes/authRoutes.js";
 import propertyRoutes from "./Routes/propertyRoutes.js";
 import uploadRoutes from "./Routes/uploadRoutes.js";
+import paymentRoutes from "./Routes/paymentRoutes.js";
+import adminRoutes from "./Routes/adminRoutes.js";
+import reviewRoutes from "./Routes/reviewRoutes.js";
 
 // Auth routes
 app.use("/api/auth", authRoutes);
@@ -61,6 +64,15 @@ app.use("/api/properties", propertyRoutes);
 
 // Upload routes
 app.use("/api/upload", uploadRoutes);
+
+// Payment routes
+app.use("/api/payment", paymentRoutes);
+
+// Admin routes
+app.use("/api/admin", adminRoutes);
+
+// Review routes
+app.use("/api/reviews", reviewRoutes);
 
 // Future routes
 // app.use("/api/bookings", bookingRoutes);
@@ -91,6 +103,7 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
       console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
+      console.log(`frontend url : ${process.env.CLIENT_URL}`);
     });
   } catch (error) {
     console.error("❌ Server startup failed:", error.message);

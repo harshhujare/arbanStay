@@ -1,11 +1,8 @@
 import { X } from "lucide-react";
-import { useState } from "react";
-import LoginForm from "./LoginForm";
-import RegisterForm from "./RegisterForm";
+import UnifiedAuthModal from "./UnifiedAuthModal";
+import PropTypes from "prop-types";
 
-export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
-  const [view, setView] = useState(initialView); // "login" or "register"
-
+export default function AuthModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
@@ -14,7 +11,7 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">
-            {view === "login" ? "Log in" : "Sign up"}
+            Log in or sign up
           </h2>
           <button
             onClick={onClose}
@@ -25,31 +22,16 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
           </button>
         </div>
 
-        {/* Forms */}
+        {/* Unified Auth Modal */}
         <div className="p-6">
-          {view === "login" ? (
-            <LoginForm onSuccess={onClose} />
-          ) : (
-            <RegisterForm onSuccess={onClose} />
-          )}
-        </div>
-
-        {/* Toggle */}
-        <div className="p-6 border-t border-gray-200 text-center">
-          <p className="text-sm text-gray-600">
-            {view === "login"
-              ? "Don't have an account? "
-              : "Already have an account? "}
-            <button
-              onClick={() => setView(view === "login" ? "register" : "login")}
-              className="font-semibold hover:underline"
-              style={{ color: "#FF385C" }}
-            >
-              {view === "login" ? "Sign up" : "Log in"}
-            </button>
-          </p>
+          <UnifiedAuthModal onSuccess={onClose} />
         </div>
       </div>
     </div>
   );
 }
+
+AuthModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+};

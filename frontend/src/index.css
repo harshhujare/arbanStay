@@ -1,1 +1,43 @@
 @import "tailwindcss";
+
+/* ── Light theme (default) ── */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
+  --bg-hover: #f3f4f6;
+  --border-color: #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --nav-bg: #ffffff;
+  --nav-border: #e5e7eb;
+  --dropdown-bg: #ffffff;
+  --badge-bg: #f3f4f6;
+  --badge-text: #374151;
+}
+
+/* ── Dark theme ── */
+.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #1e293b;
+  --bg-input: #0f172a;
+  --bg-hover: #334155;
+  --border-color: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --nav-bg: #0f172a;
+  --nav-border: #1e293b;
+  --dropdown-bg: #1e293b;
+  --badge-bg: #334155;
+  --badge-text: #cbd5e1;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}

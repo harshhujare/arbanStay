@@ -1,0 +1,300 @@
+/* ==================== CONTAINER ==================== */
+
+.unified-auth-modal {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.auth-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ==================== TYPOGRAPHY ==================== */
+
+.auth-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #222;
+  margin: 0 0 8px 0;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: #717171;
+  margin: 0;
+}
+
+.auth-info {
+  font-size: 12px;
+  color: #717171;
+  line-height: 1.5;
+}
+
+/* ==================== FORM ELEMENTS ==================== */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #222;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.country-display {
+  padding: 14px 16px;
+  border: 1px solid #b0b0b0;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #222;
+  background-color: #f7f7f7;
+}
+
+.form-input {
+  padding: 14px 16px;
+  border: 1px solid #b0b0b0;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #222;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #222;
+  border-width: 2px;
+  padding: 13px 15px; /* Adjust for border width */
+}
+
+.form-input::placeholder {
+  color: #b0b0b0;
+}
+
+/* Phone Input */
+.phone-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid #b0b0b0;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.phone-input-wrapper:focus-within {
+  border-color: #222;
+  border-width: 2px;
+}
+
+.phone-prefix {
+  padding: 0 12px;
+  font-size: 16px;
+  color: #222;
+  font-weight: 500;
+  border-right: 1px solid #e0e0e0;
+}
+
+.phone-input {
+  border: none;
+  flex: 1;
+}
+
+.phone-input:focus {
+  border: none;
+  padding: 14px 16px;
+}
+
+/* OTP Input */
+.otp-input {
+  text-align: center;
+  font-size: 24px;
+  letter-spacing: 16px;
+  font-weight: 600;
+  padding: 20px;
+}
+
+/* ==================== BUTTONS ==================== */
+
+.btn {
+  padding: 14px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(to right, #e61e4d 0%, #e31c5f 50%, #d70466 100%);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(to right, #d01346 0%, #c41952 50%, #b9045c 100%);
+  transform: scale(1.02);
+}
+
+.btn-google {
+  background: white;
+  border: 1px solid #d0d0d0;
+  color: #222;
+}
+
+.btn-google:hover:not(:disabled) {
+  border-color: #222;
+  background: #f7f7f7;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #222;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.btn-link:hover:not(:disabled) {
+  background: #f7f7f7;
+  border-radius: 4px;
+}
+
+/* ==================== GOOGLE ICON ==================== */
+
+.google-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* ==================== DIVIDER ==================== */
+
+.divider,
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 8px 0;
+}
+
+.divider::before,
+.divider::after,
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #d0d0d0;
+}
+
+.divider span,
+.auth-divider span {
+  padding: 0 16px;
+  color: #717171;
+  font-size: 14px;
+}
+
+/* ==================== OTP STAGE ==================== */
+
+.otp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.otp-sent-to {
+  font-size: 14px;
+  color: #222;
+  margin: 0;
+}
+
+/* ==================== GOOGLE USER INFO ==================== */
+
+.google-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #f7f7f7;
+  border-radius: 12px;
+}
+
+.google-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.google-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #222;
+  margin: 0;
+}
+
+.google-email {
+  font-size: 14px;
+  color: #717171;
+  margin: 4px 0 0 0;
+}
+
+/* ==================== ERROR ALERT ==================== */
+
+.error-alert {
+  padding: 12px 16px;
+  background: #fff4f4;
+  border: 1px solid #ffcdd2;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.error-alert p {
+  color: #c41952;
+  font-size: 14px;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 640px) {
+  .unified-auth-modal {
+    padding: 16px;
+  }
+
+  .auth-title {
+    font-size: 20px;
+  }
+
+  .form-input,
+  .phone-prefix {
+    font-size: 14px;
+  }
+
+  .btn {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+}
