@@ -1,38 +1,51 @@
-1. Fix the Homepage → /properties Connection
-Problem: /?city=X goes nowhere useful.
-Fix: Change SearchBar.jsx to navigate to /properties?city=X instead of /?city=X. Then in PropertiesPage, read URL params on mount using useSearchParams() (React Router) and seed the initial filter state from them. This makes search URLs shareable and bookmarkable too.
+# Search Functionality Architecture & Implementation
 
-2. Dynamic Cities from Database
-Problem: Cities are hardcoded.
-Method: Add a new backend endpoint — GET /api/properties/cities — that runs a MongoDB distinct("location.city") query. This returns only cities that actually have listings. Call this once on app load (or when the search bar mounts) and cache it in React context or Zustand/Redux so you're not re-fetching on every keystroke.
+This document outlines the current state and architecture of the search functionality in the UrbanStay application, following the recent UI/UX overhaul to an Airbnb-style search experience.
 
-3. Better Search UX
-Three things to implement:
+## 1. Routing & Flow
 
-Debounce — use lodash.debounce or a useDebounce hook (300–400ms) so API calls only fire after the user stops typing, not on every keystroke.
-Fuzzy/partial city matching — instead of a simple substring match on the frontend, move the matching to the backend so it searches against real data. Use a $regex with $options: 'i' (already partially done) or upgrade to a fuzzy search library like Fuse.js on the frontend against the cached city list.
-Search-as-you-type for the q param — wire the full-text q param to a debounced input so users get live results while typing property names/descriptions.
+Search has been separated from the Home Page into a dedicated route.
 
+*   **Dedicated Route (`/search`)**: All city-based searches and explicit queries route to `SearchResultsPage.jsx`.
+*   **Navigation & Redirects**: 
+    *   The `SearchBar` in the Header navigates the user to `/search?city=X`.
+    *   The Home Page (`HomePage.jsx`) intercepts any incoming `?city=` parameter and automatically redirects the user to `/search?city=X` using `useSearchParams`. 
+    *   This preserves the Home Page purely as an unfiltered browsing gallery while pushing targeted queries to the proper map-based results layout.
 
-4. Search Performance & Relevance
-Current gaps and fixes:
+## 2. Airbnb-Style Map & List Layout
 
-Pagination — right now you're likely fetching all matching properties at once. Add page + limit query params on both frontend and backend, and use MongoDB .skip().limit(). This is critical at scale.
-Index audit — your compound index is (city, price, maxGuests) but queries often filter by (city, bedrooms, price). Add a second compound index that matches your most common filter combinations.
-Relevance scoring — when q is used alongside filters like city or price, MongoDB's $text score alone isn't enough. Use an aggregation pipeline with $match → $addFields (textScore) → $sort so text relevance and filters work together properly.
-q + city together — right now q uses full-text search and city uses regex, but they're likely just stacked as separate $match conditions. Combine them in a single $match stage in an aggregation pipeline for correctness.
+The `SearchResultsPage.jsx` implements a split-panel design for a seamless browsing experience.
 
+*   **Desktop View**: 
+    *   **Left Panel**: A scrollable list of filtered properties (`PropertyGrid`), taking up ~55% of the viewport width. 
+    *   **Right Panel**: A sticky, interactive map displaying markers for properties in the current search query.
+*   **Mobile View**:
+    *   The layout stacks vertically. The map is hidden by default.
+    *   A floating sticky "Show Map" FAB allows users to toggle the map over the whole screen using a slick animation (`.search-map-mobile-overlay`).
+*   **Modern Aesthetics**: Maps and property cards utilize a sleek modern design, featuring deep rounded corners (`border-radius: 24px`) via dedicated CSS overrides in `SearchResultsPage.css` and fixed stacking contexts (`z-index: 0` on map panes) to prevent over-drawing on dropdowns.
 
-5. Architecture Changes (the overhaul part)
-Current: Filters live in local state in PropertiesPage.
-New: Move all filter state into the URL as query params (using React Router's useSearchParams). This means:
+## 3. Interactive Map (React-Leaflet)
 
-Refreshing the page preserves filters
-Sharing a URL shares the exact search
-Back/forward browser buttons work correctly
-No need to sync between SearchBar and PropertiesPage — they both just read/write the URL
+The search results heavily leverage `react-leaflet` to map property coordinates. 
 
-Single search context — create a useSearch custom hook that owns: current filters, the debounced API call, loading/error state, and results. Both SearchBar and PropertiesPage consume this hook rather than managing their own state.
+*   **Custom Price Markers**: Standard Leaflet pins have been replaced by custom HTML DivIcons that display the real-time property price natively on the map (e.g., a white pill box with the text `₹4,000`).
+*   **Auto-fit Bounds**: The map includes a helper `<FitBounds>` component that calculates the bounding box of the currently displayed properties and animates the zoom/pan so all markers are visible simultaneously.
+*   **Popups**: Clicking on a price marker opens a custom popup card displaying the property's thumbnail, title, location, and price, which dynamically links out to the property detail page.
 
-Summary of New Pieces to Build
-WhatHow/api/properties/cities endpointMongoDB distinct()City cachingReact context or ZustandURL-as-filter-stateuseSearchParams from React RouterDebounced inputsuseDebounce hookFuzzy city matchingFuse.js on cached listPaginationpage + limit paramsRelevance + filters combinedMongoDB aggregation pipelineuseSearch hookCentralizes all search logic
+## 4. State Management & URL Sync
+
+Filters are tied to the URL, making search queries natively shareable and bookmarkable.
+
+*   **`useSearch` Hook**: Consumes `react-router-dom`'s `useSearchParams` to act as the single source of truth for the active query parameters (`city`, `minPrice`, `maxPrice`, `bedrooms`, `amenities`, `page`). 
+*   **Debouncing**: Built-in debouncing (`setFilterDebounced`) handles rapid user text inputs without thrashing the backend.
+*   **Data Fetching (`useCachedFetch`)**: Derives a cache key based on the URL parameters and manages local data fetching / cache invalidation.
+
+## 5. Performance Improvements 
+*   **Dynamic Cities**: The `SearchProvider` fires a `distinct` query to MongoDB on app load to pull only valid cities containing active properties to populate the frontend autocomplete options, caching it in the Context.
+*   **Pagination & Limits**: Returns the top 20 documents chunked by limit bounds for instant renders.
+
+---
+
+### Future Roadmap Ideas
+*   Implement real-time geographic boundary queries utilizing MongoDB Geospatial operations (`$geoWithin`) calculated from the user dynamically pivoting the Leaflet map.
+*   Upgrade fuzzy text searching logic across descriptions/amenities.
