@@ -296,8 +296,17 @@ export const googleLogin = asyncHandler(async (req, res, next) => {
 
   if (user) {
     // Existing user - login directly
-    // Update profile photo if changed
-    if (user.profilePhoto !== googleUser.profilePhoto) {
+    // Only update profile photo from Google if user hasn't set a custom one.
+    // We detect a "custom" photo by checking if it differs from what Google provides.
+    // If user.profilePhoto is empty OR still equals the Google photo, update it from Google.
+    // If user has uploaded a different (custom) photo, preserve it.
+    const hasCustomPhoto =
+      user.profilePhoto &&
+      user.profilePhoto !== googleUser.profilePhoto &&
+      !user.profilePhoto.includes("googleusercontent.com") &&
+      !user.profilePhoto.includes("lh3.google");
+
+    if (!hasCustomPhoto) {
       user.profilePhoto = googleUser.profilePhoto;
     }
     // Ensure googleId is set (in case they matched by email)

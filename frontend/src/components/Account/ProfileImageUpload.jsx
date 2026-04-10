@@ -45,15 +45,14 @@ export default function ProfileImageUpload({ currentImage, onImageUpdate }) {
         formData,
       );
 
-      console.log("Upload successful, URL:", response.image);
+      const newImageUrl = response.image;
+
+      // Immediately persist the new photo URL to the backend
+      await apiClient.put("/auth/me", { profilePhoto: newImageUrl });
 
       // Clear temp preview and update parent with new image URL
       setTempPreview(null);
-      onImageUpdate(response.image);
-
-      alert(
-        "Profile picture uploaded successfully! Click 'Save' to update your profile.",
-      );
+      onImageUpdate(newImageUrl);
     } catch (error) {
       console.error("Image upload failed:", error);
       alert(`Upload failed: ${error.message || "Please try again."}`);
@@ -65,9 +64,6 @@ export default function ProfileImageUpload({ currentImage, onImageUpdate }) {
 
   // Simple: show temp preview during upload, otherwise show current image
   const displayImage = tempPreview || currentImage;
-
-  console.log("displayImage:", displayImage);
-  console.log("uploading:", uploading);
 
   return (
     <div className="flex flex-col items-center gap-3">

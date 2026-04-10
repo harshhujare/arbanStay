@@ -26,7 +26,7 @@ const SearchBar = ({ isAtTop = true }) => {
 
   const handleSearch = () => {
     if (cityQuery.trim()) {
-      navigate(`/?city=${encodeURIComponent(cityQuery.trim())}`);
+      navigate(`/search?city=${encodeURIComponent(cityQuery.trim())}`);
     }
     setShowSuggestions(false);
     setIsExpanded(false);
@@ -36,7 +36,7 @@ const SearchBar = ({ isAtTop = true }) => {
     setCityQuery(city);
     setShowSuggestions(false);
     setIsExpanded(false);
-    navigate(`/?city=${encodeURIComponent(city)}`);
+    navigate(`/search?city=${encodeURIComponent(city)}`);
   };
 
   useEffect(() => {

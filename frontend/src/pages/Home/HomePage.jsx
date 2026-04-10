@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import propertyService from "../../api/propertyService";
 import PropertyGrid from "../../components/Property/PropertyGrid";
@@ -8,7 +9,17 @@ import { useCachedFetch } from "../../hooks/useCachedFetch";
 import { CACHE_TTL } from "../../utils/cache";
 
 export default function HomePage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { filters, setFilter, setFilterDebounced, setPage, clearFilters } = useSearch();
+
+  // Redirect /?city=... to /search?city=...
+  useEffect(() => {
+    const city = searchParams.get("city");
+    if (city) {
+      navigate(`/search?city=${encodeURIComponent(city)}`, { replace: true });
+    }
+  }, [searchParams, navigate]);
   const [showFilters, setShowFilters] = useState(() => window.innerWidth >= 1024);
 
   // Build a stable, filter-aware cache key so each unique search is cached separately

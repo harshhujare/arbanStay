@@ -20,6 +20,7 @@ import AdminPropertiesPage from "./pages/Admin/AdminPropertiesPage";
 import AdminBookingsPage from "./pages/Admin/AdminBookingsPage";
 import AdminTransactionsPage from "./pages/Admin/AdminTransactionsPage";
 import AdminReviewsPage from "./pages/Admin/AdminReviewsPage";
+import SearchResultsPage from "./pages/Search/SearchResultsPage";
 
 const AppInner = () => {
   const location = useLocation();
@@ -31,6 +32,9 @@ const AppInner = () => {
       <Routes>
         {/* Home Page */}
         <Route path="/" element={<HomePage />} />
+
+        {/* Search Results Page */}
+        <Route path="/search" element={<SearchResultsPage />} />
 
         {/* Property Detail Page */}
         <Route path="/property/:id" element={<PropertyDetailPage />} />

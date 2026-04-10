@@ -227,11 +227,11 @@ export default function AddPropertyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: "var(--bg-secondary)" }}>
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
+      <div className="border-b sticky top-0 z-10" style={{ background: "var(--bg-primary)", borderColor: "var(--border-color)" }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 className="text-2xl font-semibold" style={{ color: "var(--text-primary)" }}>
             Add New Property
           </h1>
 
@@ -246,8 +246,9 @@ export default function AddPropertyPage() {
                         ? "bg-green-500 text-white"
                         : stage === currentStage
                           ? "bg-[#FF5A5F] text-white"
-                          : "bg-gray-200 text-gray-600"
+                          : ""
                     }`}
+                    style={stage >= currentStage && stage !== currentStage ? { background: "var(--bg-hover)", color: "var(--text-secondary)" } : {}}
                   >
                     {stage < currentStage ? (
                       <Check className="w-5 h-5" />
@@ -257,10 +258,9 @@ export default function AddPropertyPage() {
                   </div>
                   <span
                     className={`ml-3 text-sm font-medium hidden sm:block ${
-                      stage === currentStage
-                        ? "text-[#FF5A5F]"
-                        : "text-gray-600"
+                      stage === currentStage ? "text-[#FF5A5F]" : ""
                     }`}
+                    style={stage !== currentStage ? { color: "var(--text-secondary)" } : {}}
                   >
                     {stage === 1 && "Basic Info"}
                     {stage === 2 && "Location"}
@@ -269,9 +269,8 @@ export default function AddPropertyPage() {
                 </div>
                 {stage < 3 && (
                   <div
-                    className={`flex-1 h-1 mx-4 ${
-                      stage < currentStage ? "bg-green-500" : "bg-gray-200"
-                    }`}
+                    className={`flex-1 h-1 mx-4 ${stage < currentStage ? "bg-green-500" : ""}`}
+                    style={stage >= currentStage ? { background: "var(--border-color)" } : {}}
                   />
                 )}
               </div>
@@ -282,7 +281,7 @@ export default function AddPropertyPage() {
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8">
+        <div className="rounded-xl shadow-sm p-6 sm:p-8" style={{ background: "var(--bg-card)" }}>
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
               {error}
@@ -314,11 +313,12 @@ export default function AddPropertyPage() {
           )}
 
           {/* Navigation Buttons */}
-          <div className="flex gap-4 mt-8 pt-6 border-t">
+          <div className="flex gap-4 mt-8 pt-6" style={{ borderTop: "1px solid var(--border-color)" }}>
             <button
               onClick={handleBack}
               disabled={currentStage === 1 || loading}
-              className="flex items-center gap-2 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-3 rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ border: "1px solid var(--border-color)", background: "var(--bg-card)", color: "var(--text-primary)" }}
             >
               <ChevronLeft className="w-5 h-5" />
               Back
@@ -355,12 +355,11 @@ export default function AddPropertyPage() {
         </div>
       </div>
 
-      {/* Phone Verify Modal - blocks property creation until phone is verified */}
+      {/* Phone Verify Modal */}
       <PhoneVerifyModal
         isOpen={showPhoneVerify}
         onClose={() => {
           if (!isPhoneVerified) {
-            // If they close without verifying, send them back
             navigate("/host/dashboard");
           } else {
             setShowPhoneVerify(false);
@@ -374,19 +373,25 @@ export default function AddPropertyPage() {
 
 // Stage 1 Component
 function Stage1({ formData, handleChange, toggleAmenity }) {
+  const inputStyle = {
+    background: "var(--bg-input)",
+    border: "1px solid var(--border-color)",
+    color: "var(--text-primary)",
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <h2 className="text-xl font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
           Basic Information
         </h2>
-        <p className="text-gray-600 mb-6">
+        <p className="mb-6" style={{ color: "var(--text-secondary)" }}>
           Tell us about your property and what makes it special
         </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-900 mb-2">
+        <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-primary)" }}>
           Property Title *
         </label>
         <input
@@ -394,16 +399,17 @@ function Stage1({ formData, handleChange, toggleAmenity }) {
           name="title"
           value={formData.title}
           onChange={handleChange}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF5A5F] focus:border-transparent"
+          className="w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#FF5A5F] focus:border-transparent"
+          style={inputStyle}
           placeholder="e.g., Cozy Studio Apartment in Bandra"
         />
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
           {formData.title.length}/100 characters (min 10)
         </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-900 mb-2">
+        <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-primary)" }}>
           Description *
         </label>
         <textarea
@@ -411,10 +417,11 @@ function Stage1({ formData, handleChange, toggleAmenity }) {
           value={formData.description}
           onChange={handleChange}
           rows={5}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF5A5F] focus:border-transparent resize-none"
+          className="w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#FF5A5F] focus:border-transparent resize-none"
+          style={inputStyle}
           placeholder="Describe your property, its features, nearby attractions, and what makes it special..."
         />
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
           {formData.description.length}/2000 characters (min 50)
         </p>
       </div>
@@ -422,14 +429,15 @@ function Stage1({ formData, handleChange, toggleAmenity }) {
       {/* Rent Configuration */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-900 mb-2">
+          <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-primary)" }}>
             Rent Type *
           </label>
           <select
             name="rentType"
             value={formData.rentType}
             onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF5A5F] focus:border-transparent"
+            className="w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#FF5A5F] focus:border-transparent"
+            style={inputStyle}
           >
             <option value="entire_property">Entire Property Per Month</option>
             <option value="per_person">Per Person Per Month</option>
@@ -437,7 +445,7 @@ function Stage1({ formData, handleChange, toggleAmenity }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-900 mb-2">
+          <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-primary)" }}>
             Rent Amount (₹/month) *
           </label>
           <input
@@ -446,14 +454,15 @@ function Stage1({ formData, handleChange, toggleAmenity }) {
             value={formData.rentAmount}
             onChange={handleChange}
             min="500"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF5A5F] focus:border-transparent"
+            className="w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#FF5A5F] focus:border-transparent"
+            style={inputStyle}
             placeholder="5000"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-900 mb-2">
+        <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-primary)" }}>
           Maximum Guests *
         </label>
         <input
@@ -463,13 +472,14 @@ function Stage1({ formData, handleChange, toggleAmenity }) {
           onChange={handleChange}
           min="1"
           max="20"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF5A5F] focus:border-transparent"
+          className="w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#FF5A5F] focus:border-transparent"
+          style={inputStyle}
         />
       </div>
 
       {/* Amenities */}
       <div>
-        <label className="block text-sm font-medium text-gray-900 mb-3">
+        <label className="block text-sm font-medium mb-3" style={{ color: "var(--text-primary)" }}>
           Amenities
         </label>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -478,11 +488,12 @@ function Stage1({ formData, handleChange, toggleAmenity }) {
               key={amenity}
               type="button"
               onClick={() => toggleAmenity(amenity)}
-              className={`px-4 py-2 rounded-lg border-2 transition-all text-sm ${
+              className="px-4 py-2 rounded-lg border-2 transition-all text-sm"
+              style={
                 formData.amenities.includes(amenity)
-                  ? "border-[#FF5A5F] bg-red-50 text-[#FF5A5F] font-medium"
-                  : "border-gray-300 hover:border-gray-400"
-              }`}
+                  ? { borderColor: "#FF5A5F", background: "rgba(255,90,95,0.1)", color: "#FF5A5F", fontWeight: 600 }
+                  : { borderColor: "var(--border-color)", color: "var(--text-primary)", background: "var(--bg-input)" }
+              }
             >
               {amenity}
             </button>
@@ -500,20 +511,26 @@ function Stage2({
   setCoordinates,
   useCurrentLocation,
 }) {
+  const inputStyle = {
+    background: "var(--bg-input)",
+    border: "1px solid var(--border-color)",
+    color: "var(--text-primary)",
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <h2 className="text-xl font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
           Location Details
         </h2>
-        <p className="text-gray-600 mb-6">
+        <p className="mb-6" style={{ color: "var(--text-secondary)" }}>
           Help guests find your property with precise location information
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-900 mb-2">
+          <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-primary)" }}>
             City *
           </label>
           <input
@@ -521,13 +538,14 @@ function Stage2({
             name="location.city"
             value={formData.location.city}
             onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF5A5F] focus:border-transparent"
+            className="w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#FF5A5F] focus:border-transparent"
+            style={inputStyle}
             placeholder="Mumbai"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-900 mb-2">
+          <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-primary)" }}>
             Address (Optional)
           </label>
           <input
@@ -535,7 +553,8 @@ function Stage2({
             name="location.address"
             value={formData.location.address}
             onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF5A5F] focus:border-transparent"
+            className="w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#FF5A5F] focus:border-transparent"
+            style={inputStyle}
             placeholder="Street address"
           />
         </div>
@@ -543,20 +562,21 @@ function Stage2({
 
       <div>
         <div className="flex items-center justify-between mb-3">
-          <label className="text-sm font-medium text-gray-900">
+          <label className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
             Pin Location on Map *
           </label>
           <button
             type="button"
             onClick={useCurrentLocation}
-            className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+            className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition"
+            style={{ background: "var(--bg-hover)", color: "var(--text-primary)" }}
           >
             <MapPin className="w-4 h-4" />
             Use Current Location
           </button>
         </div>
 
-        <div className="h-80 rounded-lg overflow-hidden border-2 border-gray-300">
+        <div className="h-80 rounded-lg overflow-hidden" style={{ border: "2px solid var(--border-color)" }}>
           <MapContainer
             center={[
               formData.coordinates.latitude,
@@ -580,12 +600,12 @@ function Stage2({
           </MapContainer>
         </div>
 
-        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-          <p className="text-sm text-gray-700">
-            <strong>Selected Coordinates:</strong>
+        <div className="mt-3 p-3 rounded-lg" style={{ background: "var(--bg-secondary)" }}>
+          <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+            Selected Coordinates:
           </p>
-          <p className="text-sm text-gray-600">
-            Latitude: {formData.coordinates.latitude.toFixed(6)}, Longitude:{" "}
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            Latitude: {formData.coordinates.latitude.toFixed(6)}, Longitude{" "}
             {formData.coordinates.longitude.toFixed(6)}
           </p>
         </div>
@@ -622,10 +642,10 @@ function Stage3({ images, onImagesChange }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <h2 className="text-xl font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
           Property Images
         </h2>
-        <p className="text-gray-600 mb-6">
+        <p className="mb-6" style={{ color: "var(--text-secondary)" }}>
           Upload high-quality photos to showcase your property
         </p>
       </div>
@@ -646,3 +666,4 @@ function Stage3({ images, onImagesChange }) {
     </div>
   );
 }
+

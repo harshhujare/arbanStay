@@ -1,0 +1,25 @@
+[36mvite v7.2.4 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m???[39m 2430 modules transformed.
+[31m???[39m Build failed in 8.28s
+[31merror during build:
+[31msrc/pages/Search/SearchResultsPage.jsx (7:2): "MapOff" is not exported by "node_modules/lucide-react/dist/esm/lucide-react.js", imported by "src/pages/Search/SearchResultsPage.jsx".[31m
+file: [36mC:/Documents/sold_projects/UrbanStay-1/frontend/src/pages/Search/SearchResultsPage.jsx:7:2[31m
+[33m
+5:   ChevronRight,
+6:   Map,
+7:   MapOff,
+     ^
+8:   X,
+9:   SlidersHorizontal,
+[31m
+    at getRollupError (file:///C:/Documents/sold_projects/UrbanStay-1/frontend/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///C:/Documents/sold_projects/UrbanStay-1/frontend/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at Module.error (file:///C:/Documents/sold_projects/UrbanStay-1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:16956:16)
+    at Module.traceVariable (file:///C:/Documents/sold_projects/UrbanStay-1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:17412:29)
+    at ModuleScope.findVariable (file:///C:/Documents/sold_projects/UrbanStay-1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:15076:39)
+    at FunctionScope.findVariable (file:///C:/Documents/sold_projects/UrbanStay-1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:5649:38)
+    at FunctionBodyScope.findVariable (file:///C:/Documents/sold_projects/UrbanStay-1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:5649:38)
+    at Identifier.bind (file:///C:/Documents/sold_projects/UrbanStay-1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:5423:40)
+    at CallExpression.bind (file:///C:/Documents/sold_projects/UrbanStay-1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:2809:28)
+    at CallExpression.bind (file:///C:/Documents/sold_projects/UrbanStay-1/frontend/node_modules/rollup/dist/es/shared/node-entry.js:12123:15)[39m
