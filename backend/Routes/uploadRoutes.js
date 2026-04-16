@@ -13,7 +13,7 @@ const router = express.Router();
 router.post(
   "/property-images",
   protect,
-  authorize("host", "guest"), // Guest can upload (will become host when creating property)
+  authorize("host", "guest", "admin"), // Guest can upload (will become host when creating property), admin can also upload
   upload.array("images", 10), // Field name: 'images', max 10 files
   uploadPropertyImages,
 );
@@ -27,6 +27,6 @@ router.post(
 );
 
 // Delete image from Cloudinary
-router.delete("/image", protect, authorize("host"), deleteImage);
+router.delete("/image", protect, authorize("host", "admin"), deleteImage);
 
 export default router;

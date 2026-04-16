@@ -48,8 +48,9 @@ export default function Navbar() {
   };
 
   const handleLogout = async () => {
+    setIsOpen(false); // Close menu first for instant feedback
     await logout();
-    setIsOpen(false);
+    navigate("/"); // Redirect to home after logout
   };
 
   const handleBecomeHost = () => {

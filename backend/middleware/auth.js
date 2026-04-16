@@ -3,11 +3,6 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ErrorResponse from "../utils/ErrorResponse.js";
 import { User } from "../Models/index.js";
 
-/**
- * Protect routes - verify JWT token
- * Checks for token in cookie or Authorization header
- * Attaches user to req.user if valid
- */
 export const protect = asyncHandler(async (req, res, next) => {
   let token;
 

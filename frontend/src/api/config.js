@@ -27,11 +27,15 @@ export const apiClient = {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Something went wrong");
+        // Attach status so callers can distinguish 401 from network/server errors
+        const err = new Error(data.error || "Something went wrong");
+        err.status = response.status;
+        throw err;
       }
 
       return data;
     } catch (error) {
+      // Re-throw: network errors won't have a .status (undefined = not a 401)
       throw error;
     }
   },
