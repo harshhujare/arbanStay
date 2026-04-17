@@ -43,7 +43,7 @@ router.get("/:id/like-status", protect, getLikeStatus);
 router.get("/:id", getProperty);
 
 // Update/Delete property (only host/owner)
-router.put("/:id", protect, authorize("host"), updateProperty);
-router.delete("/:id", protect, authorize("host"), deleteProperty);
+router.put("/:id", protect, authorize("host", "admin"), updateProperty);
+router.delete("/:id", protect, authorize("host", "admin"), deleteProperty);
 
 export default router;

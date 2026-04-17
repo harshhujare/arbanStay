@@ -11,6 +11,56 @@ Both methods are handled through a single modal component: `UnifiedAuthModal.jsx
 
 ---
 
+## Recent Changes (April 2026)
+
+This section documents recent auth-flow updates and related bug fixes, including local uncommitted changes.
+
+### 2026-04-05 (committed: `a21a9e6`)
+
+#### Auth flow updates
+
+- **Google login now preserves custom profile photos** in `backend/Controllers/authController.js`.
+  - Previous behavior could overwrite user-uploaded photos with the Google avatar.
+  - New behavior updates from Google only when user has no custom photo (or still uses the Google-hosted photo).
+
+- **Legacy auth UI components were removed**:
+  - `frontend/src/components/Auth/GoogleAuthButton.jsx`
+  - `frontend/src/components/Auth/LoginForm.jsx`
+  - `frontend/src/components/Auth/PhoneAuthForm.jsx`
+  - `frontend/src/components/Auth/RegisterForm.jsx`
+  - This confirms the consolidated flow through `UnifiedAuthModal.jsx` as the primary auth entry point.
+
+### 2026-04-16 (local uncommitted changes)
+
+#### Auth/session reliability fixes
+
+- **Do not log users out on transient backend/network failures**:
+  - `frontend/src/context/AuthContext.jsx` now clears auth state only for `401/403` during startup/background validation (`loadUser`, `validateTokenInBackground`).
+  - Prevents false logout on temporary outages or `500` responses.
+
+- **Propagate HTTP status to auth callers**:
+  - `frontend/src/api/config.js` now attaches `error.status` before throwing API errors.
+  - Enables `AuthContext` to distinguish "unauthorized" from "temporary failure".
+
+- **Faster logout UX with optimistic local clear**:
+  - `frontend/src/context/AuthContext.jsx` now clears local auth state immediately, then calls backend logout in background.
+  - `frontend/src/components/Home/Navbar/Navbar.jsx` closes menu first and redirects to home (`/`) after logout.
+
+- **Safer production cookie detection for cross-origin auth**:
+  - `backend/utils/sendTokenResponse.js` now treats environment as production if either:
+    - `NODE_ENV === "production"`, or
+    - `CLIENT_URL` starts with `https://`
+  - Helps avoid misconfigured secure/sameSite cookie flags on deployments where `NODE_ENV` is missing.
+
+#### Other bug fixes (authorization)
+
+- **Admin role now allowed where operationally required**:
+  - `backend/Routes/propertyRoutes.js`: admin can update/delete properties.
+  - `backend/Routes/uploadRoutes.js`: admin can upload/delete property images.
+  - Fixes admin workflow blocks in property and media management.
+
+---
+
 ## Token Storage Strategy
 
 | Storage | What is stored | Purpose |

@@ -74,10 +74,14 @@ export const AuthProvider = ({ children }) => {
       updateAuthCache(data.user);
       setUser(data.user);
     } catch (error) {
-      // Token expired or invalid, clear everything
-      clearAuthCache();
-      setUser(null);
-      setIsAuthenticated(false);
+      // Only clear session on confirmed auth failures (401 / 403)
+      // Ignore network errors, 500s, etc. — don't log out on a blip
+      if (error.status === 401 || error.status === 403) {
+        clearAuthCache();
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+      // Otherwise silently keep the cached session alive
     }
   };
 
@@ -91,10 +95,13 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       updateAuthCache(data.user); // Cache the user data
     } catch (error) {
-      // Not logged in or token expired
-      clearAuthCache();
-      setUser(null);
-      setIsAuthenticated(false);
+      // Only clear session on confirmed auth failures (401 / 403)
+      // A network error or 500 should not log the user out
+      if (error.status === 401 || error.status === 403) {
+        clearAuthCache();
+        setUser(null);
+        setIsAuthenticated(false);
+      }
     } finally {
       setLoading(false);
     }
@@ -182,10 +189,14 @@ export const AuthProvider = ({ children }) => {
    * Logout user
    */
   const logout = async () => {
-    await authService.logout();
-    clearAuthCache(); // Clear localStorage
+    // Clear local state IMMEDIATELY (optimistic) — user sees logout at once
+    clearAuthCache();
     setUser(null);
     setIsAuthenticated(false);
+    // Fire backend call in background to clear the HTTP-only cookie
+    authService.logout().catch(() => {
+      // Ignore errors — local state is already cleared
+    });
   };
 
   /**
